@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Альфа-Партнёр</title>
+<style>
+/* ==========================================================================
+   1. ПЕРЕМЕННЫЕ
+   Тёмная тема как основа: слайды — полупрозрачные панели поверх одного
+   сквозного транзакционного графа. Граф не перезапускается при смене слайда,
+   поэтому презентация читается как единая среда, а не как набор картинок.
+   ========================================================================== */
+:root{
+  --red:      #EF3124;   /* заливки, плашки, акценты */
+  --red-lite: #FF5546;   /* мелкий красный текст на тёмном — контраст выше */
+  --ink:      #0A0A0A;   /* базовый фон */
+
+  /* Текст на тёмном */
+  --tx-1: #FFFFFF;
+  --tx-2: rgba(255,255,255,.66);   /* основной приглушённый */
+  --tx-3: rgba(255,255,255,.52);   /* подписи */
+
+  /* Линии и поверхности */
+  --line:      rgba(255,255,255,.13);
+  --line-hard: rgba(255,255,255,.80);
+  --surf:      rgba(255,255,255,.055);
+  --surf-2:    rgba(255,255,255,.085);
+
+  /* Базовая раскладка 16:9 */
+  --slide-w: 1280px;
+  --slide-h: 720px;
+  --pad:     64px;
+  --gutter:  24px;
+
+  /* Фирменный стек с деградацией (Styrene лицензионный) */
+  --font: 'Styrene A', 'Styrene A Web', -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+
+  /* Шкала кеглей */
+  --fs-hero:  112px;
+  --fs-h1:    52px;
+  --fs-num:   76px;
+  --fs-lead:  26px;
+  --fs-body:  19px;
+  --fs-small: 16px;
+  --fs-micro: 13px;
+
+  /* Тайминги. Вход медленнее выхода — возврат назад ощущается быстрым. */
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --t-enter:  .62s;
+  --t-leave:  .40s;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+html,body{
+  height:100%;
+  background:var(--ink);
+  color:var(--tx-1);
+  font-family:var(--font);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow:hidden;
+}
+
+/* ==========================================================================
+   2. КАРКАС
+   ========================================================================== */
+#deck{
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--ink);
+}
+
+#stage{
+  position:relative;
+  width:var(--slide-w); height:var(--slide-h);
+  transform-origin:center center;
+  background:var(--ink);
+  overflow:hidden;
+  will-change:transform;
+}
+
+/* Сквозной фон: один граф на всю презентацию, живёт под слайдами */
+#bg{ position:absolute; inset:0; width:100%; height:100%; z-index:0; }
+
+/* Слайд — почти непрозрачная панель: граф остаётся фактурой, а не шумом.
+   В момент перехода две панели накладываются, фон на миг проступает ярче —
+   это и создаёт ощущение общей среды. */
+.slide{
+  position:absolute; inset:0; z-index:1;
+  padding:var(--pad);
+  background:rgba(10,10,10,.93);
+  display:flex; flex-direction:column;
+  opacity:0; visibility:hidden; pointer-events:none;
+  transition:opacity var(--t-leave) ease,
+             transform var(--t-enter) var(--ease-out),
+             visibility var(--t-enter);
+}
+.slide.is-active{
+  opacity:1; visibility:visible; pointer-events:auto; transform:none;
+  transition:opacity var(--t-enter) ease,
+             transform var(--t-enter) var(--ease-out),
+             visibility var(--t-enter);
+}
+/* Стартовые и конечные позиции: направление зависит от навигации */
+.slide.pre-right  { transform:translate3d(76px,0,0)  scale(.955); }
+.slide.pre-left   { transform:translate3d(-76px,0,0) scale(.955); }
+.slide.leave-left { visibility:visible; opacity:0; transform:translate3d(-76px,0,0) scale(.955); }
+.slide.leave-right{ visibility:visible; opacity:0; transform:translate3d(76px,0,0)  scale(.955); }
+.slide.no-trans   { transition:none !important; }
+
+/* Сетка */
+.grid{ display:grid; grid-template-columns:repeat(12,1fr); gap:var(--gutter); }
+.col-4{ grid-column:span 4; }
+.col-6{ grid-column:span 6; }
+
+.rule{ height:1px; background:var(--line); border:0; }
+.rule-red{ height:4px; width:84px; background:var(--red); border:0; }
+
+/* ==========================================================================
+   3. ТИПОГРАФИКА
+   ========================================================================== */
+.eyebrow{
+  font-size:var(--fs-micro); font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--tx-3);
+  display:inline-flex; align-items:center; gap:10px;
+}
+.eyebrow::before{ content:''; width:18px; height:3px; background:var(--red); flex:none; }
+
+.h1{ font-size:var(--fs-h1); font-weight:700; letter-spacing:-.03em; line-height:1.02; }
+.lead{ font-size:var(--fs-lead); font-weight:400; line-height:1.32; letter-spacing:-.012em; color:var(--tx-2); }
+.body{ font-size:var(--fs-body); font-weight:400; line-height:1.45; }
+.small{ font-size:var(--fs-small); line-height:1.45; color:var(--tx-2); }
+.micro{ font-size:var(--fs-micro); line-height:1.5; color:var(--tx-3); }
+.mute{ color:var(--tx-2); }
+.idx{ font-size:var(--fs-micro); font-weight:700; color:var(--red-lite); letter-spacing:.1em; }
+
+/* Акцентная плашка */
+.plate{
+  background:var(--red); color:#FFFFFF;
+  padding:18px 28px;
+  font-size:20px; font-weight:600; line-height:1.3; letter-spacing:-.012em;
+  position:relative; overflow:hidden;
+  flex:none;   /* никогда не сжимается флексом — иначе молча обрезает текст */
+}
+/* Диагональный блик — один проход при входе слайда */
+.plate::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.24) 50%,transparent 65%);
+  transform:translateX(-120%);
+}
+.slide.is-active .plate::after{ animation:sheen 1.5s .55s var(--ease-out) both; }
+@keyframes sheen{ to{ transform:translateX(120%); } }
+
+/* ==========================================================================
+   4. ЧИСЛА-ПОДТВЕРЖДЕНИЯ
+   ========================================================================== */
+.figure{
+  font-size:var(--fs-num); font-weight:700; letter-spacing:-.045em; line-height:.92;
+  /* Ровно под две строки кегля 76/0.92 — «каждый третий» не наезжает на заголовок */
+  height:142px; display:flex; align-items:flex-end;
+}
+.figure-bar{ height:4px; width:0; background:var(--red); margin-top:12px; }
+.slide.is-active .figure-bar{ animation:barGrow .85s .5s var(--ease-out) forwards; }
+@keyframes barGrow{ to{ width:100%; } }
+.figure-label{ margin-top:14px; font-size:var(--fs-small); line-height:1.3; color:var(--tx-2); }
+
+/* ==========================================================================
+   5. ТАБЛИЦЫ
+   ========================================================================== */
+table{ width:100%; border-collapse:collapse; }
+th,td{ text-align:left; vertical-align:middle; }
+
+/* Слои ценности. Первые два слоя намеренно приглушены: они нужны только как
+   фон, на котором третий читается как единственный незакрытый конкурентами. */
+.t-layers td{ padding:10px 16px; font-size:var(--fs-body); border-top:1px solid var(--line); }
+.t-layers td:first-child{ color:var(--tx-2); }
+.t-layers td:last-child{ text-align:right; color:var(--tx-3); }
+
+/* Ключевая строка — фактор, на котором строится выбор варианта.
+   Вынесена из ряда: поверхность, красный маркер слева, крупнее кегль. */
+.t-layers tr.key td{
+  background:var(--surf-2);
+  padding-top:16px; padding-bottom:16px;
+  border-top:1px solid rgba(255,255,255,.30);
+  border-bottom:1px solid rgba(255,255,255,.30);
+}
+.t-layers tr.key td:first-child{
+  box-shadow:inset 4px 0 0 var(--red);
+  font-size:21px; font-weight:700; color:var(--tx-1);
+}
+.t-layers .chip{
+  display:inline-block; background:var(--red); color:#FFFFFF;
+  padding:8px 18px; font-size:18px; font-weight:700; letter-spacing:.01em;
+  white-space:nowrap;
+}
+
+/* Строки проявляются по очереди, ключевая — последней, плашка после неё */
+.slide.is-active .t-layers tr{ animation:rowIn .5s var(--ease-out) both; }
+.slide.is-active .t-layers tr:nth-child(1){ animation-delay:.50s; }
+.slide.is-active .t-layers tr:nth-child(2){ animation-delay:.62s; }
+.slide.is-active .t-layers tr.key      { animation-delay:.76s; }
+.slide.is-active .t-layers .chip{ animation:chipIn .46s 1.02s var(--ease-out) both; }
+@keyframes chipIn{ from{ opacity:0; transform:scale(.80); } to{ opacity:1; transform:scale(1); } }
+
+/* Сравнение вариантов */
+.t-fork{ table-layout:fixed; }
+.t-fork th,.t-fork td{ padding:15px 18px; font-size:var(--fs-small); line-height:1.28; }
+.t-fork th{ font-weight:600; vertical-align:bottom; padding-bottom:18px; }
+.t-fork col.c-crit{ width:26%; } .t-fork col.c-v1{ width:37%; } .t-fork col.c-v2{ width:37%; }
+.t-fork td.crit{ color:var(--tx-3); }
+.t-fork tbody tr{ border-top:1px solid var(--line); }
+.t-fork tbody tr:last-child{ border-bottom:1px solid var(--line); }
+.t-fork .v1{ background:var(--surf-2); font-weight:500; color:var(--tx-1); }
+.t-fork thead .v1{ box-shadow:inset 0 4px 0 var(--red); }
+.t-fork .v2{ color:var(--tx-3); }
+.t-fork tbody tr:last-child .v1{ font-weight:700; }
+/* Построчное проявление */
+.slide.is-active .t-fork tbody tr{ animation:rowIn .5s var(--ease-out) both; }
+@keyframes rowIn{ from{ opacity:0; transform:translateX(-14px); } }
+
+/* ==========================================================================
+   6. СЛАЙД 1 — ТИТУЛ
+   Единственный слайд, где панель почти прозрачная: граф работает в полную силу.
+   ========================================================================== */
+.s-title{ justify-content:space-between; background:rgba(10,10,10,.40); }
+.s-title::before{
+  content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background:radial-gradient(115% 95% at 10% 58%,
+              rgba(10,10,10,.94) 0%, rgba(10,10,10,.74) 34%, rgba(10,10,10,0) 70%);
+}
+.s-title > *{ position:relative; z-index:1; }
+.hero{ font-size:var(--fs-hero); font-weight:700; letter-spacing:-.05em; line-height:.96; }
+/* Заголовок выезжает из-под маски */
+.mask{ overflow:hidden; }
+.slide.is-active .mask > span{ display:block; animation:maskUp .95s var(--ease-out) both; }
+@keyframes maskUp{ from{ transform:translateY(105%); } }
+
+/* ==========================================================================
+   7. СЛАЙД 2 — ПРОБЛЕМА
+   ========================================================================== */
+/* Лента из 30 делений: «месяц» заполняется красным по дню */
+.month{ display:flex; gap:4px; height:32px; }
+.month i{ flex:1; background:var(--surf); display:block; }
+.slide.is-active .month i{ animation:dayFill .34s var(--ease-out) both; }
+@keyframes dayFill{ from{ background:var(--surf); } to{ background:var(--red); } }
+
+.barrier{ border-top:3px solid var(--line-hard); padding-top:18px; }
+.barrier h3{ font-size:26px; font-weight:600; letter-spacing:-.018em; margin:10px 0 10px; }
+
+.proof{ border-left:4px solid var(--red); padding:4px 0 4px 22px; }
+
+/* ==========================================================================
+   8. СЛАЙД 3 — СУТЬ ВАРИАНТОВ
+   ========================================================================== */
+.variant{ padding:26px 28px; height:100%; display:flex; flex-direction:column; }
+.variant .tag{ font-size:var(--fs-micro); font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+.variant h3{ font-size:34px; font-weight:700; letter-spacing:-.028em; line-height:1.06; margin:12px 0 18px; }
+.variant p{ font-size:17px; line-height:1.5; }
+.variant .foot{ margin-top:auto; padding-top:18px; font-size:var(--fs-small); font-weight:600; }
+
+.variant.v-one{ background:var(--red); color:#FFFFFF; position:relative; isolation:isolate; }
+.variant.v-one .tag{ color:rgba(255,255,255,.74); }
+.variant.v-one .foot{ border-top:1px solid rgba(255,255,255,.34); }
+
+/* --- Бегущий свет по рамке карточки Варианта 1 ---------------------------
+   Конический градиент вращается вокруг карточки, двухслойная альфа-маска
+   (mask-composite: exclude) оставляет от него только рамку в 2px.
+   Кометы белые: на красной заливке любой цветной свет утонет, а белый
+   держит контраст и не вводит в палитру ничего постороннего.
+   Анимируется одна кастомная переменная — содержимое карточки не перерисовывается.
+------------------------------------------------------------------------- */
+@property --beam-a{ syntax:'<angle>'; inherits:false; initial-value:40deg; }
+
+.beam-ring,.beam-glow{
+  /* Кольцо вынесено целиком за пределы карточки: белый свет на тёмном фоне
+     слайда читается в полную силу, на красной заливке он бы утонул. */
+  position:absolute; inset:-3px; pointer-events:none;
+  /* Обе копии режутся одной маской — свет остаётся кантом, а не пятном */
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;
+          mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask-composite:exclude;
+  background-image:conic-gradient(from var(--beam-a),
+    transparent 0deg,
+    /* Комета 1: длинный хвост, яркая голова */
+    rgba(255,255,255,.05)  18deg,
+    rgba(255,255,255,.70)  46deg,
+    rgba(255,255,255,1)    56deg,
+    rgba(255,255,255,1)    60deg,
+    transparent            63deg,
+    /* Комета 2: противоположная, приглушённая — даёт объём */
+    transparent           198deg,
+    rgba(255,255,255,.04) 216deg,
+    rgba(255,255,255,.50) 244deg,
+    rgba(255,255,255,1)   254deg,
+    rgba(255,255,255,1)   258deg,
+    transparent           261deg,
+    transparent           360deg);
+}
+.beam-ring{
+  padding:3px;   /* в кегле этой презентации 2px теряются на проекторе */
+  /* Постоянный кант под кометой: без него рамка 80% времени пустая
+     и эффект читается как случайный блик, а не как обведённая карточка. */
+  background-color:rgba(255,255,255,.26);
+}
+/* Размытая копия кольца — отсвет, падающий на тёмный фон слайда */
+.beam-glow{ padding:5px; filter:blur(16px); opacity:.55; z-index:-1; }
+
+/* Крутится только на активном слайде — общий принцип этого файла */
+.slide.is-active .beam-ring,
+.slide.is-active .beam-glow{ animation:beamSpin 7s linear infinite; }
+@keyframes beamSpin{ from{ --beam-a:0deg; } to{ --beam-a:360deg; } }
+
+/* В режиме высокой контрастности свет убираем, оставляем системную рамку */
+@media (forced-colors:active){
+  .beam-ring,.beam-glow{ display:none; }
+  .variant.v-one{ border:1px solid CanvasText; }
+}
+
+.variant.v-two{ background:var(--surf); border:1px solid var(--line); color:var(--tx-2); }
+.variant.v-two .tag{ color:var(--tx-3); }
+.variant.v-two h3{ color:var(--tx-1); }
+.variant.v-two .foot{ border-top:1px solid var(--line); color:var(--tx-3); }
+
+/* ==========================================================================
+   9. СЛАЙД 6 — КАК ЭТО РАБОТАЕТ
+   ========================================================================== */
+.flow{ position:relative; height:250px; }
+.flow-in{ position:absolute; left:0; width:330px; border-left:2px solid var(--line-hard); padding:2px 0 2px 16px; }
+.flow-in h4{ font-size:19px; font-weight:600; letter-spacing:-.01em; }
+.flow-in p{ font-size:var(--fs-small); color:var(--tx-3); line-height:1.35; margin-top:3px; }
+.flow-node{
+  position:absolute; left:520px; top:88px; width:190px; padding:16px 14px; text-align:center;
+  background:var(--surf-2); border:1px solid var(--line);
+  font-size:var(--fs-small); font-weight:600; line-height:1.3;
+}
+.flow-out{ position:absolute; left:790px; top:62px; width:362px; padding:22px 24px; background:var(--red); color:#FFFFFF; }
+.flow-out h4{ font-size:21px; font-weight:700; letter-spacing:-.018em; line-height:1.22; }
+.flow-out p{ font-size:var(--fs-small); margin-top:8px; opacity:.9; line-height:1.35; }
+.flow svg{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+/* Пунктир бежит по линиям — сценарии сходятся в одну точку */
+.flow .wire-flow{ stroke-dasharray:7 13; }
+.slide.is-active .flow .wire-flow{ animation:wire 1.5s linear infinite; }
+@keyframes wire{ to{ stroke-dashoffset:-40; } }
+.slide.is-active .pulse{ animation:pulse 2.1s ease-out infinite; transform-origin:center; }
+@keyframes pulse{ 0%{ r:5; opacity:.9; } 70%,100%{ r:22; opacity:0; } }
+
+.consent{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gutter); }
+.consent div{ border-top:1px solid var(--line); padding-top:12px; }
+
+/* ==========================================================================
+   10. СЛАЙДЫ 7 / 8 — АРГУМЕНТЫ
+   ========================================================================== */
+.block3{ border-top:3px solid var(--line-hard); padding-top:20px; }
+.block3 h3{ font-size:27px; font-weight:600; letter-spacing:-.022em; margin:10px 0 12px; }
+
+.arg{ border-top:1px solid var(--line); padding-top:13px; display:flex; gap:20px; }
+.arg .idx{ padding-top:5px; min-width:22px; }
+.arg h3{ font-size:21px; font-weight:600; letter-spacing:-.018em; margin-bottom:5px; }
+
+/* ==========================================================================
+   11. СЛУЖЕБНЫЙ СЛОЙ
+   ========================================================================== */
+#chrome{ position:fixed; inset:auto 0 0 0; z-index:40; pointer-events:none; }
+#bar-track{ height:3px; background:rgba(255,255,255,.14); }
+#bar{ height:3px; width:0; background:var(--red); transition:width var(--t-enter) var(--ease-out); }
+#counter{
+  position:fixed; right:22px; bottom:16px; z-index:41;
+  font-size:12px; letter-spacing:.12em; color:rgba(255,255,255,.45); pointer-events:none;
+}
+#counter b{ color:#FFFFFF; font-weight:600; }
+#hint{
+  position:fixed; left:22px; bottom:14px; z-index:41;
+  font-size:11px; letter-spacing:.06em; color:rgba(255,255,255,.35); pointer-events:none;
+}
+#notes{
+  position:fixed; left:0; right:0; bottom:0; z-index:45;
+  background:#000000; color:#FFFFFF; border-top:3px solid var(--red);
+  padding:18px 26px 22px; font-size:15px; line-height:1.5;
+  transform:translateY(101%); transition:transform .34s var(--ease-out);
+}
+#notes.is-open{ transform:translateY(0); }
+#notes .eyebrow{ color:rgba(255,255,255,.6); margin-bottom:8px; }
+
+/* ==========================================================================
+   12. АНИМАЦИИ ПОЯВЛЕНИЯ ЭЛЕМЕНТОВ
+   ========================================================================== */
+@keyframes rise{ from{ opacity:0; transform:translateY(20px); } to{ opacity:1; transform:translateY(0); } }
+.slide.is-active .anim{ animation:rise .6s var(--ease-out) both; }
+.slide.is-active .anim:nth-child(1){ animation-delay:.06s; }
+.slide.is-active .anim:nth-child(2){ animation-delay:.14s; }
+.slide.is-active .anim:nth-child(3){ animation-delay:.22s; }
+.slide.is-active .anim:nth-child(4){ animation-delay:.30s; }
+.slide.is-active .anim:nth-child(5){ animation-delay:.38s; }
+.slide.is-active .anim:nth-child(6){ animation-delay:.46s; }
+
+/* Системная настройка «уменьшить движение» */
+@media (prefers-reduced-motion:reduce){
+  .slide,#bar,#notes{ transition-duration:.12s !important; }
+  .slide.is-active .anim,.slide.is-active .mask > span,.slide.is-active .month i,
+  .slide.is-active .figure-bar,.slide.is-active .t-fork tbody tr,
+  .slide.is-active .plate::after,.slide.is-active .wire-flow,.slide.is-active .pulse,
+  .slide.is-active .beam-ring,.slide.is-active .beam-glow,
+  .slide.is-active .t-layers tr,.slide.is-active .t-layers .chip{
+    animation:none !important;   /* свет паркуется на 40deg — рамка остаётся подсвеченной */
+  }
+  .figure-bar{ width:100%; }
+  .month i{ background:var(--red); }
+}
+
+/* ==========================================================================
+   13. РЕЖИМ ПЕЧАТИ (клавиша P) И @media print
+   В печати фоновый граф ограничен первой страницей: растягивать один канвас
+   на 8 полос нельзя — картинка исказится. Остальные страницы идут по чистому
+   тёмному фону сцены.
+   ========================================================================== */
+html.print-mode,body.print-mode{ height:auto; overflow:visible; background:#1C1C1C; }
+body.print-mode{ padding:28px 0; }
+body.print-mode #deck{ position:static; display:block; height:auto; background:transparent; }
+body.print-mode #stage{ width:var(--slide-w); height:auto; transform:none !important; margin:0 auto; overflow:visible; }
+body.print-mode #bg{ height:var(--slide-h); }
+body.print-mode .slide{
+  position:relative; inset:auto;
+  width:var(--slide-w); height:var(--slide-h);
+  opacity:1; visibility:visible; pointer-events:auto; transform:none !important;
+  margin:0 0 28px;
+}
+body.print-mode .slide *{ animation:none !important; }
+body.print-mode .figure-bar{ width:100%; }
+body.print-mode .month i{ background:var(--red); }
+body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.print-mode #hint{ display:none; }
+
+@page{ size:1280px 720px; margin:0; }
+@media print{
+  html,body{ height:auto; overflow:visible; padding:0; background:var(--ink); }
+  #deck{ position:static; display:block; height:auto; }
+  #stage{ width:var(--slide-w); height:auto; transform:none !important; overflow:visible; }
+  #bg{ height:var(--slide-h); }
+  .slide{
+    position:relative; inset:auto;
+    width:var(--slide-w); height:var(--slide-h);
+    opacity:1 !important; visibility:visible !important; transform:none !important;
+    margin:0; page-break-after:always; break-after:page;
+  }
+  .slide *{ animation:none !important; }
+  .figure-bar{ width:100%; }
+  .month i{ background:var(--red); }
+  .slide:last-child{ page-break-after:auto; break-after:auto; }
+  #chrome,#counter,#notes,#hint{ display:none !important; }
+  /* Тёмный фон и заливки должны попасть в PDF */
+  html,body,#stage,.slide,.plate,.flow-out,.flow-node,.t-fork .v1,.variant,.month i,.figure-bar{
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="stage">
+    <!-- Сквозной транзакционный граф под всеми слайдами -->
+    <canvas id="bg"></canvas>
+
+  <!-- ====================================================================
+       СЛАЙД 1 — ТИТУЛ
+       ==================================================================== -->
+  <section class="slide s-title"
+    data-notes="Один тезис: у банка есть данные, которых нет ни у кого, и мы предлагаем превратить их в продукт. Подзаголовок не пересказывать — сразу к проблеме.">
+    <div class="anim"><hr class="rule-red"></div>
+
+    <div style="margin-top:auto;">
+      <div class="hero mask"><span>Альфа-Партнёр</span></div>
+      <div class="lead anim" style="margin-top:30px; max-width:820px;">
+        Превращаем транзакционный граф банка в канал роста бизнеса наших клиентов
+      </div>
+    </div>
+
+    <div class="anim" style="margin-top:auto;">
+      <hr class="rule" style="margin-bottom:18px;">
+      <div class="small">Август 2026</div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       СЛАЙД 2 — ПРОБЛЕМА
+       ==================================================================== -->
+  <section class="slide"
+    data-notes="Проблема известна каждому в зале: контрагента ищут месяц и всё равно вслепую. Три барьера назвать быстро, задержаться на нижнем блоке — это доказательная база.">
+    <div class="anim">
+      <div class="eyebrow">Проблема</div>
+      <h1 class="h1" style="margin-top:16px;">Поиск контрагента занимает месяц</h1>
+    </div>
+
+    <div class="anim" style="margin-top:26px;">
+      <div class="month" id="month"></div>
+      <div class="micro" style="margin-top:10px;">Тридцать дней на то, чтобы найти, проверить и дойти до человека, принимающего решение</div>
+    </div>
+
+    <div class="anim grid" style="margin-top:40px;">
+      <div class="col-4 barrier">
+        <span class="idx">01</span>
+        <h3>Найти</h3>
+        <p class="body mute">Открытые источники дают факт существования компании, не дают её пригодность</p>
+      </div>
+      <div class="col-4 barrier">
+        <span class="idx">02</span>
+        <h3>Проверить</h3>
+        <p class="body mute">Формальная благонадёжность не равна реальной платёжной дисциплине</p>
+      </div>
+      <div class="col-4 barrier">
+        <span class="idx">03</span>
+        <h3>Дойти до ЛПР</h3>
+        <p class="body mute">Секретарь, отсутствие повода, холодный контакт</p>
+      </div>
+    </div>
+
+    <div class="anim proof" style="margin-top:auto;">
+      <p class="body">
+        <b>Проблема подтверждена.</b> Проведено 18 глубинных интервью
+        (руководители и собственники бизнеса), прототип проверен на 22 участниках.
+        Респонденты подтвердили заинтересованность в сервисе и готовность за него платить.
+      </p>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       СЛАЙД 3 — РАЗВИЛКА: СУТЬ ВАРИАНТОВ
+       ==================================================================== -->
+  <section class="slide"
+    data-notes="Сначала объяснить, чем варианты различаются по существу, и только потом идти в таблицу. Ключевая разница — где заканчивается продукт: в чате внутри банка или на выдаче контакта.">
+    <div class="anim">
+      <div class="eyebrow">Развилка</div>
+      <h1 class="h1" style="margin-top:16px;">Два варианта реализации</h1>
+    </div>
+
+    <div class="anim grid" style="margin-top:34px; flex:1; align-items:stretch;">
+      <div class="col-6">
+        <div class="variant v-one">
+          <div class="beam-glow" aria-hidden="true"></div>
+          <div class="beam-ring" aria-hidden="true"></div>
+          <div class="tag">Вариант 1</div>
+          <h3>Внутри Альфа-Босса</h3>
+          <p>
+            Альфа-Партнёр живёт в сервисе для первых лиц. Пользователь — сам ЛПР:
+            он получает рекомендацию, открывает карточку контрагента и после
+            взаимного подтверждения переходит в чат с первым лицом другой компании,
+            не выходя из контура банка. Сотрудник может искать в интернет-банке,
+            но результат приходит руководителю.
+          </p>
+          <div class="foot">Продукт заканчивается разговором двух ЛПР внутри банка</div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="variant v-two">
+          <div class="tag">Вариант 2</div>
+          <h3>Всем в интернет-банке</h3>
+          <p>
+            Альфа-Партнёр — раздел общего интернет-банка, открытый всем сегментам.
+            Пользователь — сотрудник отдела закупок или продаж. Сервис отдаёт
+            карточку компании и контактные данные, дальше стороны общаются вне
+            банка: почта, мессенджеры, телефон. Банк в этом разговоре
+            не участвует и его исхода не видит.
+          </p>
+          <div class="foot">Продукт заканчивается выдачей контакта</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       СЛАЙД 4 — РАЗВИЛКА: СРАВНЕНИЕ ПАРАМЕТРОВ
+       ==================================================================== -->
+  <section class="slide"
+    data-notes="Сравнение вести построчно и без нажима: правление само увидит расхождение между воронкой на бумаге и воронкой в реальности. Последняя строка — вывод слайда.">
+    <div class="anim">
+      <div class="eyebrow">Развилка</div>
+      <h1 class="h1" style="margin-top:14px;">Сравнение по параметрам</h1>
+    </div>
+
+    <div class="anim" style="margin-top:26px;">
+      <table class="t-fork">
+        <colgroup><col class="c-crit"><col class="c-v1"><col class="c-v2"></colgroup>
+        <thead>
+          <tr>
+            <th></th>
+            <th class="v1">Вариант 1 — в Альфа-Боссе</th>
+            <th class="v2">Вариант 2 — всем в интернет-банке</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="crit">Пользователь</td><td class="v1">ЛПР</td><td class="v2">Сотрудники отделов закупок и продаж</td></tr>
+          <tr><td class="crit">Воронка на бумаге</td><td class="v1">Уже в канале: каждый третий ЛПР</td><td class="v2">Все сегменты интернет-банка</td></tr>
+          <tr><td class="crit">Воронка в реальности</td><td class="v1">Доступна сразу</td><td class="v2">Целевой пользователь в интернет-банк не заходит</td></tr>
+          <tr><td class="crit">Коммуникация</td><td class="v1">Чат внутри контура банка</td><td class="v2">Передача контактов, общение уходит наружу</td></tr>
+          <tr><td class="crit">Данные после матча</td><td class="v1">Видим исход, усиливаем модели склонности</td><td class="v2">Не видим ничего</td></tr>
+          <tr><td class="crit">Монетизация</td><td class="v1">Подписка + продуктовые продажи</td><td class="v2">Только подписка</td></tr>
+          <tr><td class="crit">Защищаемость</td><td class="v1">Сетевой эффект и контроль контура</td><td class="v2">Копируется конкурентом за 6–12 месяцев</td></tr>
+          <tr><td class="crit">Тип</td><td class="v1">Платформа</td><td class="v2">Фича</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       СЛАЙД 5 — АКТИВ
+       ==================================================================== -->
+  <section class="slide"
+    data-notes="Держать паузу на трёх числах — это фактура доклада. Главное: защищён только третий слой, первые два есть у конкурентов.">
+    <div class="anim">
+      <div class="eyebrow">Актив</div>
+      <h1 class="h1" style="margin-top:14px;">Актив, которого нет ни у кого</h1>
+    </div>
+
+    <div class="anim grid" style="margin-top:24px;">
+      <div class="col-4">
+        <div class="figure"><span data-count="130000" data-format="space">0</span></div>
+        <div class="figure-bar"></div>
+        <div class="figure-label">клиентов в сегменте<br>среднего бизнеса</div>
+      </div>
+      <div class="col-4">
+        <div class="figure"><span>каждый<br>третий</span></div>
+        <div class="figure-bar"></div>
+        <div class="figure-label">ЛПР уже пользуется<br>Альфа-Боссом</div>
+      </div>
+      <div class="col-4">
+        <div class="figure"><span data-count="100" data-suffix="%">0</span></div>
+        <div class="figure-bar"></div>
+        <div class="figure-label">транзакций клиентов<br>внутри банка</div>
+      </div>
+    </div>
+
+    <div class="anim" style="margin-top:24px;">
+      <table class="t-layers">
+        <tbody>
+          <tr><td>Данные о транзакциях</td><td>Есть у любого крупного банка</td></tr>
+          <tr><td>Верификация надёжности</td><td>Есть у Сбера и у СПАРК</td></tr>
+          <tr class="key"><td>Прямой доступ к первому лицу</td><td><b class="chip">Нет ни у кого</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="anim plate" style="margin-top:auto;">
+      Мы обещаем не самый большой каталог, а проверенного и доступного контрагента
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       СЛАЙД 6 — КАК ЭТО РАБОТАЕТ
+       ==================================================================== -->
+  <section class="slide"
+    data-notes="Три входа — одна точка выхода: чат первых лиц внутри банка. На блоке про согласие не задерживаться, он снимает вопрос комплаенса заранее.">
+    <div class="anim">
+      <div class="eyebrow">Продукт</div>
+      <h1 class="h1" style="margin-top:14px;">Как это работает</h1>
+    </div>
+
+    <div class="anim flow" style="margin-top:30px;">
+      <svg viewBox="0 0 1152 250" preserveAspectRatio="none" aria-hidden="true">
+        <g fill="none" stroke="#FFFFFF" stroke-opacity=".20" stroke-width="1">
+          <path d="M330 30  C 440 30, 440 120, 520 120"></path>
+          <path d="M330 122 C 440 122, 440 122, 520 122"></path>
+          <path d="M330 214 C 440 214, 440 124, 520 124"></path>
+        </g>
+        <!-- Бегущий пунктир поверх линий -->
+        <g fill="none" stroke="#EF3124" stroke-width="2">
+          <path class="wire-flow" d="M330 30  C 440 30, 440 120, 520 120"></path>
+          <path class="wire-flow" d="M330 122 C 440 122, 440 122, 520 122"></path>
+          <path class="wire-flow" d="M330 214 C 440 214, 440 124, 520 124"></path>
+        </g>
+        <path d="M710 122 L 782 122" fill="none" stroke="#EF3124" stroke-width="2"></path>
+        <path d="M782 122 l -9 -5 v 10 z" fill="#EF3124"></path>
+        <circle class="pulse" cx="615" cy="122" r="5" fill="none" stroke="#EF3124" stroke-width="2"></circle>
+      </svg>
+
+      <div class="flow-in" style="top:0;">
+        <h4><span class="idx" style="margin-right:8px;">01</span>Рекомендация</h4>
+        <p>ЛПР получает подобранного контрагента в Альфа-Боссе</p>
+      </div>
+      <div class="flow-in" style="top:92px;">
+        <h4><span class="idx" style="margin-right:8px;">02</span>Поиск</h4>
+        <p>ЛПР задаёт параметры и получает подборку</p>
+      </div>
+      <div class="flow-in" style="top:184px;">
+        <h4><span class="idx" style="margin-right:8px;">03</span>Делегирование</h4>
+        <p>Сотрудник ищет в интернет-банке, результат приходит ЛПР</p>
+      </div>
+
+      <div class="flow-node">Подтверждение<br>обеими сторонами</div>
+
+      <div class="flow-out">
+        <h4>Чат ЛПР ↔ ЛПР внутри Альфа-Босса</h4>
+        <p>Единственная точка выхода для всех трёх сценариев</p>
+      </div>
+    </div>
+
+    <div class="anim" style="margin-top:auto;">
+      <div class="eyebrow" style="margin-bottom:14px;">Данные и согласие</div>
+      <div class="consent">
+        <div class="micro">Клиент явно соглашается быть видимым в рекомендациях</div>
+        <div class="micro">Банк раскрывает результат работы модели, а не транзакционные данные</div>
+        <div class="micro">Контакт открывается только по подтверждению обеих сторон</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       СЛАЙД 7 — ПОЧЕМУ ВАРИАНТ 2 НЕ РАБОТАЕТ
+       ==================================================================== -->
+  <section class="slide"
+    data-notes="Три причины, по одному предложению каждая — не расширять. Тон ровный: мы разбираем вариант, а не спорим с его автором.">
+    <div class="anim">
+      <div class="eyebrow">Оценка варианта 2</div>
+      <h1 class="h1" style="margin-top:14px;">Почему Вариант 2 не работает</h1>
+    </div>
+
+    <div class="anim grid" style="margin-top:64px;">
+      <div class="col-4 block3">
+        <span class="idx">01</span>
+        <h3>Воронка фиктивна</h3>
+        <p class="body mute">Закупщики и продавцы не имеют доступа в интернет-банк, и руководители не готовы его давать. Мы строим широкую воронку для аудитории, которая в неё не войдёт.</p>
+      </div>
+      <div class="col-4 block3">
+        <span class="idx">02</span>
+        <h3>Ценность утекает из контура</h3>
+        <p class="body mute">Отдав контакт, мы не узнаем, состоялась ли сделка, не получим сигналов для моделей и не продадим продукт в момент потребности. Монетизируем вход и дарим рынку выход.</p>
+      </div>
+      <div class="col-4 block3">
+        <span class="idx">03</span>
+        <h3>Продукт копируем</h3>
+        <p class="body mute">Каталог с подпиской Сбер запустит быстрее нас на своей базе. Соревнуясь размером базы, мы играем там, где структурно слабее.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       СЛАЙД 8 — ПОЧЕМУ АЛЬФА-БОСС
+       ==================================================================== -->
+  <section class="slide"
+    data-notes="Пять аргументов проговорить плотно, по одной фразе на пункт. Финальная плашка — формулировка, ради которой собран весь доклад.">
+    <div class="anim">
+      <div class="eyebrow">Рекомендация</div>
+      <h1 class="h1" style="margin-top:12px;">Почему Альфа-Босс</h1>
+    </div>
+
+    <div class="anim" style="margin-top:24px; display:flex; flex-direction:column; gap:8px;">
+      <div class="arg">
+        <span class="idx">01</span>
+        <div>
+          <h3>Строим на своём преимуществе</h3>
+          <p class="small">Цифровой канал к первым лицам — единственный актив, который конкурент не может воспроизвести.</p>
+        </div>
+      </div>
+      <div class="arg">
+        <span class="idx">02</span>
+        <div>
+          <h3>Замкнутый контур даёт данные, данные дают продажи</h3>
+          <p class="small">Разговор происходит у нас — модели склонности получают сигналы о потребностях бизнеса, с согласия пользователя.</p>
+        </div>
+      </div>
+      <div class="arg">
+        <span class="idx">03</span>
+        <div>
+          <h3>Продукт сам расширяет свою базу</h3>
+          <p class="small">Нашёл партнёра → пригласил его в Альфа-Босс. Каждый матч приводит нового ЛПР.</p>
+        </div>
+      </div>
+      <div class="arg">
+        <span class="idx">04</span>
+        <div>
+          <h3>Первый шаг к закрытому бизнес-сообществу</h3>
+          <p class="small">Альфа-Босс даёт доступ не только к финансовому капиталу, но и к человеческому. Из Варианта 2 такого пути нет.</p>
+        </div>
+      </div>
+      <div class="arg">
+        <span class="idx">05</span>
+        <div>
+          <h3>Двойная монетизация</h3>
+          <p class="small">Подписка плюс рост продуктовых продаж. Вариант 2 оставляет только первое.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="anim plate" style="margin-top:auto;">
+      Вариант 2 расширяет охват и уничтожает преимущество.
+      Вариант 1 сужает охват и создаёт актив, который невозможно скопировать
+    </div>
+  </section>
+
+  </div><!-- /#stage -->
+</div><!-- /#deck -->
+
+<!-- Служебный слой -->
+<div id="chrome"><div id="bar-track"><div id="bar"></div></div></div>
+<div id="counter"><b id="cur">1</b> / 8</div>
+<div id="hint">← → навигация · N заметки · P печать</div>
+<div id="notes"><div class="eyebrow">Заметки докладчика</div><div id="notes-text"></div></div>
+
+<script>
+/* ==========================================================================
+   ЛОГИКА: сквозной граф, навигация, счётчики, печать.
+   Браузерные хранилища не используются — состояние живёт только в памяти.
+   ========================================================================== */
+(function(){
+  'use strict';
+
+  var slides   = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage    = document.getElementById('stage');
+  var deck     = document.getElementById('deck');
+  var bar      = document.getElementById('bar');
+  var cur      = document.getElementById('cur');
+  var notes    = document.getElementById('notes');
+  var notesTxt = document.getElementById('notes-text');
+
+  var index = 0, notesOpen = false, printMode = false;
+  var BASE_W = 1280, BASE_H = 720;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Лента из 30 делений на слайде «Проблема» ---------------- */
+  (function buildMonth(){
+    var m = document.getElementById('month'), html = '';
+    for(var d = 0; d < 30; d++){
+      html += '<i style="animation-delay:' + (0.30 + d * 0.028).toFixed(3) + 's"></i>';
+    }
+    m.innerHTML = html;
+  })();
+
+  /* ---------- Задержки построчного проявления таблицы ------------------ */
+  Array.prototype.forEach.call(document.querySelectorAll('.t-fork tbody tr'), function(tr, i){
+    tr.style.animationDelay = (0.24 + i * 0.055).toFixed(3) + 's';
+  });
+
+  /* ---------- Счётчики чисел ------------------------------------------- */
+  function runCounters(slide){
+    Array.prototype.forEach.call(slide.querySelectorAll('[data-count]'), function(el){
+      var target = parseFloat(el.getAttribute('data-count'));
+      var suffix = el.getAttribute('data-suffix') || '';
+      var spaced = el.getAttribute('data-format') === 'space';
+
+      function fmt(v){
+        v = Math.round(v);
+        // Неразрывный пробел как разделитель разрядов — группа не разорвётся
+        return spaced ? String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : String(v);
+      }
+      if(reduced){ el.textContent = fmt(target) + suffix; return; }
+
+      var t0 = null, dur = 1150;
+      function step(ts){
+        if(t0 === null) t0 = ts;
+        var p = Math.min((ts - t0) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 4);          // easeOutQuart
+        el.textContent = fmt(target * eased) + suffix;
+        if(p < 1) requestAnimationFrame(step);
+      }
+      el.textContent = '0' + suffix;
+      setTimeout(function(){ requestAnimationFrame(step); }, 380);
+    });
+  }
+
+  /* ---------- Сквозной транзакционный граф ------------------------------
+     Узлы — компании, рёбра — связи, красные импульсы — платежи.
+     Canvas 2D: единый файл без внешних библиотек и без зависимости от WebGL.
+     Граф общий для всей презентации и не перезапускается при смене слайда.
+  ----------------------------------------------------------------------- */
+  var graph = (function(canvas){
+    var ctx = canvas.getContext('2d');
+    var DPR = 2, W = BASE_W, H = BASE_H;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    ctx.scale(DPR, DPR);
+
+    var N = 58, LINK = 162;
+    var nodes = [], edges = [], pulses = [], raf = null, running = false;
+
+    for(var i = 0; i < N; i++){
+      nodes.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - .5) * .30,
+        vy: (Math.random() - .5) * .30,
+        r: Math.random() < .13 ? 3.4 : 1.7,
+        hot: Math.random() < .13            // «крупный клиент» — красный узел
+      });
+    }
+
+    function rebuildEdges(){
+      edges.length = 0;
+      for(var a = 0; a < N; a++){
+        for(var b = a + 1; b < N; b++){
+          var dx = nodes[a].x - nodes[b].x, dy = nodes[a].y - nodes[b].y;
+          var d2 = dx * dx + dy * dy;
+          if(d2 < LINK * LINK) edges.push([a, b, 1 - Math.sqrt(d2) / LINK]);
+        }
+      }
+    }
+
+    function frame(){
+      ctx.clearRect(0, 0, W, H);
+
+      for(var i = 0; i < N; i++){
+        var n = nodes[i];
+        n.x += n.vx; n.y += n.vy;
+        if(n.x < 0 || n.x > W) n.vx *= -1;
+        if(n.y < 0 || n.y > H) n.vy *= -1;
+      }
+      rebuildEdges();
+
+      ctx.lineWidth = 1;
+      for(var e = 0; e < edges.length; e++){
+        var ed = edges[e], p = nodes[ed[0]], q = nodes[ed[1]];
+        ctx.strokeStyle = 'rgba(255,255,255,' + (ed[2] * .30).toFixed(3) + ')';
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+      }
+
+      for(var k = 0; k < N; k++){
+        var nd = nodes[k];
+        ctx.beginPath(); ctx.arc(nd.x, nd.y, nd.r, 0, 6.2832);
+        ctx.fillStyle = nd.hot ? 'rgba(239,49,36,.95)' : 'rgba(255,255,255,.66)';
+        ctx.fill();
+      }
+
+      // Импульсы-платежи бегут по случайным рёбрам
+      if(Math.random() < .10 && edges.length){
+        var ee = edges[(Math.random() * edges.length) | 0];
+        pulses.push({ a: ee[0], b: ee[1], t: 0, sp: .006 + Math.random() * .008 });
+      }
+      for(var u = pulses.length - 1; u >= 0; u--){
+        var pu = pulses[u];
+        pu.t += pu.sp;
+        if(pu.t >= 1){ pulses.splice(u, 1); continue; }
+        var A = nodes[pu.a], B = nodes[pu.b];
+        ctx.beginPath();
+        ctx.arc(A.x + (B.x - A.x) * pu.t, A.y + (B.y - A.y) * pu.t, 2.6, 0, 6.2832);
+        ctx.fillStyle = 'rgba(239,49,36,' + Math.sin(pu.t * Math.PI).toFixed(3) + ')';
+        ctx.fill();
+      }
+
+      if(running) raf = requestAnimationFrame(frame);
+    }
+
+    return {
+      start: function(){
+        if(running || reduced) return;
+        running = true; raf = requestAnimationFrame(frame);
+      },
+      stop: function(){ running = false; if(raf) cancelAnimationFrame(raf); },
+      still: function(){ running = false; frame(); }   // один статичный кадр
+    };
+  })(document.getElementById('bg'));
+
+  graph.still();
+  graph.start();
+
+  /* Не крутим граф, когда вкладка не видна */
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden || printMode) graph.stop(); else graph.start();
+  });
+
+  /* ---------- Масштабирование сцены под окно ---------------------------- */
+  function fit(){
+    if(printMode){ stage.style.transform = 'none'; return; }
+    var k = Math.min(deck.clientWidth / BASE_W, deck.clientHeight / BASE_H);
+    stage.style.transform = 'scale(' + k + ')';
+  }
+
+  /* ---------- Показ слайда с направленным переходом --------------------- */
+  function show(i){
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    var from = slides[index], to = slides[i], dir = i >= index ? 1 : -1;
+
+    if(from !== to){
+      from.classList.remove('is-active');
+      from.classList.add(dir > 0 ? 'leave-left' : 'leave-right');
+      (function(el){
+        setTimeout(function(){ el.classList.remove('leave-left', 'leave-right'); }, 640);
+      })(from);
+
+      // Ставим входящий слайд в стартовую позицию без анимации, затем отпускаем
+      to.classList.remove('leave-left', 'leave-right');
+      to.classList.add('no-trans', dir > 0 ? 'pre-right' : 'pre-left');
+      void to.offsetWidth;
+      to.classList.remove('no-trans', 'pre-right', 'pre-left');
+    }
+    to.classList.add('is-active');
+
+    index = i;
+    bar.style.width = ((index + 1) / slides.length * 100) + '%';
+    cur.textContent = index + 1;
+    notesTxt.textContent = to.getAttribute('data-notes') || '';
+    runCounters(to);
+  }
+
+  function next(){ if(index < slides.length - 1) show(index + 1); }
+  function prev(){ if(index > 0) show(index - 1); }
+
+  function toggleNotes(){
+    notesOpen = !notesOpen;
+    notes.classList.toggle('is-open', notesOpen);
+  }
+
+  /* ---------- Режим печати (клавиша P) ---------------------------------- */
+  function togglePrint(){
+    printMode = !printMode;
+    document.body.classList.toggle('print-mode', printMode);
+    document.documentElement.classList.toggle('print-mode', printMode);
+    if(printMode){
+      graph.still();
+      slides.forEach(function(s){ s.classList.remove('leave-left', 'leave-right'); });
+      stage.style.transform = 'none';
+      window.scrollTo(0, 0);
+    } else {
+      fit();
+      graph.start();
+      show(index);
+    }
+  }
+
+  /* ---------- Клавиатура (включая русскую раскладку) -------------------- */
+  document.addEventListener('keydown', function(e){
+    var k = e.key;
+    if(k === 'ArrowRight' || k === 'ArrowDown' || k === 'PageDown' || k === ' ' || k === 'Spacebar'){
+      if(printMode) return; e.preventDefault(); next();
+    } else if(k === 'ArrowLeft' || k === 'ArrowUp' || k === 'PageUp'){
+      if(printMode) return; e.preventDefault(); prev();
+    } else if(k === 'Home'){ e.preventDefault(); show(0); }
+    else if(k === 'End'){ e.preventDefault(); show(slides.length - 1); }
+    else if(k === 'n' || k === 'N' || k === 'т' || k === 'Т'){ e.preventDefault(); toggleNotes(); }
+    else if(k === 'p' || k === 'P' || k === 'з' || k === 'З'){ e.preventDefault(); togglePrint(); }
+  });
+
+  /* ---------- Клик по половинам экрана ---------------------------------- */
+  deck.addEventListener('click', function(e){
+    if(printMode) return;
+    if(e.clientX > window.innerWidth / 2) next(); else prev();
+  });
+
+  /* ---------- Свайп ------------------------------------------------------ */
+  var tx = 0, ty = 0, moved = false;
+  deck.addEventListener('touchstart', function(e){
+    var t = e.changedTouches[0]; tx = t.clientX; ty = t.clientY; moved = false;
+  }, {passive:true});
+  deck.addEventListener('touchmove', function(){ moved = true; }, {passive:true});
+  deck.addEventListener('touchend', function(e){
+    if(printMode || !moved) return;
+    var t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+    if(Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)){ dx < 0 ? next() : prev(); }
+  }, {passive:true});
+
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', fit);
+  window.addEventListener('beforeprint', function(){ graph.still(); stage.style.transform = 'none'; });
+  window.addEventListener('afterprint', function(){ if(!printMode){ fit(); graph.start(); } });
+
+  fit();
+  show(0);
+})();
+</script>
+</body>
+</html>

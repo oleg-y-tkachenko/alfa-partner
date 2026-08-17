@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Альфа-Партнёр — защита на Правлении</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================================================
+   СЛОЙ ТОКЕНОВ.
+   ВНИМАНИЕ: дизайн-система Альфа-Банка в проекте недоступна (пустой репозиторий,
+   Figma-библиотека не подключена). Значения ниже — ЗАГЛУШКИ, повторяющие
+   структуру типового токен-набора. Замена на реальную тему = правка только
+   этого блока; в стилях компонентов ниже нет ни одного литерального цвета
+   или кегля. Соответствие «наш токен → токен ДС» описано в README.md.
+   ========================================================================== */
+:root{
+  /* --- цвет: поверхности ---------------------------------------------- */
+  --c-bg:            #FFFFFF;   /* → color/background/primary        */
+  --c-surface:       #F5F5F7;   /* → color/background/secondary      */
+  --c-surface-2:     #FAFAFB;   /* → color/background/tertiary       */
+  --c-border:        #E3E4E8;   /* → color/border/primary            */
+  --c-border-strong: #C9CBD2;   /* → color/border/secondary          */
+
+  /* --- цвет: текст ------------------------------------------------------ */
+  --c-ink:           #0B0B0C;   /* → color/text/primary              */
+  --c-ink-2:         #62656E;   /* → color/text/secondary            */
+  --c-ink-3:         #9296A0;   /* → color/text/tertiary             */
+  --c-on-accent:     #FFFFFF;   /* → color/text/on-accent            */
+
+  /* --- цвет: акцент (один на слайд) ------------------------------------ */
+  --c-accent:        #EF3124;   /* → color/accent/primary  (бренд-красный) */
+  --c-accent-weak:   #FDECEA;   /* → color/accent/surface            */
+  --c-accent-2:      #2B2D33;   /* → color/neutral/900 — второй ряд в графиках */
+
+  /* --- цвет: плейсхолдеры (служебный, в ДС отсутствует) ---------------- */
+  --c-ph-ink:        #A7ABB5;
+  --c-ph-border:     #C4C8D2;
+  --c-ph-bg:         #F7F8FA;
+
+  /* --- типографическая шкала ------------------------------------------- */
+  --ff:            'Inter', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --fs-hero:       132px;  /* → type/display/xl  — ключевая цифра слайда */
+  --fs-display:    96px;   /* → type/display/l                          */
+  --fs-number:     64px;   /* → type/display/m                          */
+  --fs-h1:         56px;   /* → type/heading/xl — заголовок слайда      */
+  --fs-h2:         34px;   /* → type/heading/l                          */
+  --fs-h3:         26px;   /* → type/heading/m                          */
+  --fs-body:       22px;   /* → type/body/l                             */
+  --fs-small:      18px;   /* → type/body/m                             */
+  --fs-caption:    15px;   /* → type/caption/s                          */
+  --lh-tight:      1.04;
+  --lh-head:       1.14;
+  --lh-body:       1.42;
+  --fw-reg:        400;
+  --fw-med:        500;
+  --fw-bold:       700;
+  --tr-tight:      -0.02em;
+
+  /* --- сетка и отступы (шаг 8) ----------------------------------------- */
+  --sp-1: 4px;  --sp-2: 8px;   --sp-3: 16px;  --sp-4: 24px;
+  --sp-5: 32px; --sp-6: 48px;  --sp-7: 64px;  --sp-8: 96px;
+  --grid-margin: 88px;   /* поле слайда слева/справа */
+  --grid-gutter: 24px;   /* межколонник, 12 колонок  */
+
+  /* --- радиусы и обводки ------------------------------------------------ */
+  --r-s: 8px; --r-m: 16px; --r-l: 24px; --r-pill: 999px;
+  --bw: 1px;
+
+  /* --- размер слайда ---------------------------------------------------- */
+  --slide-w: 1920px;
+  --slide-h: 1080px;
+}
+
+/* ============================================================================
+   БАЗА
+   ========================================================================== */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--c-surface);font-family:var(--ff);color:var(--c-ink);
+  -webkit-font-smoothing:antialiased}
+#stage{position:fixed;inset:0;overflow:hidden}
+#deck{position:absolute;left:50%;top:50%;width:var(--slide-w);height:var(--slide-h);
+  transform-origin:center center;transform:translate(-50%,-50%)}
+
+.slide{
+  position:absolute;inset:0;width:var(--slide-w);height:var(--slide-h);
+  background:var(--c-bg);display:none;flex-direction:column;
+  padding:var(--sp-7) var(--grid-margin) var(--sp-6);
+}
+.slide.is-active{display:flex}
+
+/* --- единая шапка слайда: одна позиция на всех 16 --------------------- */
+.head{min-height:150px;flex:0 0 auto}
+.kicker{font-size:var(--fs-caption);font-weight:var(--fw-med);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--c-ink-3);margin-bottom:var(--sp-3)}
+h1{font-size:var(--fs-h1);line-height:var(--lh-head);letter-spacing:var(--tr-tight);
+  font-weight:var(--fw-bold);max-width:1500px}
+h1 em{font-style:normal;color:var(--c-accent)}
+.body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center}
+.body.top{justify-content:flex-start;padding-top:var(--sp-2)}
+.foot{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;
+  padding-top:var(--sp-4);margin-top:var(--sp-4);border-top:var(--bw) solid var(--c-border);
+  font-size:var(--fs-caption);color:var(--c-ink-3)}
+.src{font-size:var(--fs-caption);color:var(--c-ink-3)}
+
+/* --- типографические утилиты (только из шкалы) ------------------------ */
+.t-h2{font-size:var(--fs-h2);line-height:var(--lh-head);font-weight:var(--fw-bold)}
+.t-h3{font-size:var(--fs-h3);line-height:var(--lh-head);font-weight:var(--fw-bold)}
+.t-body{font-size:var(--fs-body);line-height:var(--lh-body);color:var(--c-ink-2)}
+.t-small{font-size:var(--fs-small);line-height:var(--lh-body);color:var(--c-ink-2)}
+.t-cap{font-size:var(--fs-caption);color:var(--c-ink-3)}
+.ink{color:var(--c-ink)}
+.num{font-size:var(--fs-number);line-height:var(--lh-tight);font-weight:var(--fw-bold);
+  letter-spacing:var(--tr-tight);font-variant-numeric:tabular-nums}
+.num-hero{font-size:var(--fs-hero);line-height:var(--lh-tight);font-weight:var(--fw-bold);
+  letter-spacing:var(--tr-tight);font-variant-numeric:tabular-nums}
+.num-l{font-size:var(--fs-display);line-height:var(--lh-tight);font-weight:var(--fw-bold);
+  letter-spacing:var(--tr-tight);font-variant-numeric:tabular-nums}
+.accent{color:var(--c-accent)}
+
+/* --- плейсхолдер: виден издалека, случайно не оставишь ---------------- */
+.ph{display:inline-block;color:var(--c-ph-ink);background:var(--c-ph-bg);
+  border:1px dashed var(--c-ph-border);border-radius:var(--r-s);
+  padding:0 .28em;font-weight:var(--fw-med);font-variant-numeric:tabular-nums}
+.ph-block{display:flex;align-items:center;justify-content:center;color:var(--c-ph-ink);
+  background:var(--c-ph-bg);border:1px dashed var(--c-ph-border);border-radius:var(--r-m);
+  font-size:var(--fs-small);text-align:center;padding:var(--sp-4)}
+
+/* --- карточка / плитка ------------------------------------------------- */
+.card{background:var(--c-surface-2);border:var(--bw) solid var(--c-border);
+  border-radius:var(--r-l);padding:var(--sp-5)}
+.card.plain{background:var(--c-bg)}
+.card.accent{background:var(--c-accent-weak);border-color:var(--c-accent-weak)}
+.row{display:flex;gap:var(--grid-gutter)}
+.row>*{flex:1 1 0;min-width:0}
+.stack-2{display:flex;flex-direction:column;gap:var(--sp-2)}
+.stack-3{display:flex;flex-direction:column;gap:var(--sp-3)}
+.stack-4{display:flex;flex-direction:column;gap:var(--sp-4)}
+.metric-label{font-size:var(--fs-small);color:var(--c-ink-2);line-height:var(--lh-body)}
+
+/* --- таблица ------------------------------------------------------------ */
+table{width:100%;border-collapse:collapse;font-size:var(--fs-small)}
+th,td{text-align:left;padding:var(--sp-3) var(--sp-3);
+  border-bottom:var(--bw) solid var(--c-border);vertical-align:top}
+thead th{font-size:var(--fs-caption);font-weight:var(--fw-med);color:var(--c-ink-3);
+  letter-spacing:.06em;text-transform:uppercase;border-bottom-color:var(--c-border-strong)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.total td{font-weight:var(--fw-bold);color:var(--c-ink);border-bottom:none;
+  border-top:2px solid var(--c-ink);padding-top:var(--sp-3)}
+tr.group td{color:var(--c-ink-2)}
+td.name{color:var(--c-ink);font-weight:var(--fw-med)}
+.tag{display:inline-block;font-size:var(--fs-caption);color:var(--c-ink-2);
+  background:var(--c-surface);border-radius:var(--r-pill);padding:2px 10px;white-space:nowrap}
+
+/* --- схемы (слайды 6,7,8) — единый визуальный язык -------------------- */
+.node{background:var(--c-bg);border:var(--bw) solid var(--c-border-strong);
+  border-radius:var(--r-m);padding:var(--sp-4);display:flex;flex-direction:column;
+  gap:var(--sp-2);justify-content:center;min-height:150px}
+.node .n-idx{font-size:var(--fs-caption);color:var(--c-ink-3);font-weight:var(--fw-med)}
+.node .n-title{font-size:var(--fs-h3);font-weight:var(--fw-bold);line-height:var(--lh-head)}
+.node .n-text{font-size:var(--fs-small);color:var(--c-ink-2);line-height:var(--lh-body)}
+.node.is-active{border-color:var(--c-accent);border-width:2px}
+.node.is-active .n-idx{color:var(--c-accent)}
+.flow{display:flex;align-items:stretch;gap:var(--sp-2)}
+.flow>.node{flex:1 1 0}
+.arrow{flex:0 0 40px;align-self:center;height:2px;background:var(--c-border-strong);
+  position:relative}
+.arrow::after{content:"";position:absolute;right:0;top:-4px;border:5px solid transparent;
+  border-left-color:var(--c-border-strong)}
+.arrow.v{flex:none;width:2px;height:36px;align-self:center;background:var(--c-border-strong)}
+.arrow.v::after{right:-4px;top:auto;bottom:0;border:5px solid transparent;
+  border-top-color:var(--c-border-strong);border-left-color:transparent}
+
+/* --- телефон-мокап (слайд 5), собран из примитивов -------------------- */
+.device{width:400px;height:812px;border:10px solid var(--c-ink);border-radius:44px;
+  background:var(--c-bg);padding:var(--sp-4) var(--sp-3);display:flex;flex-direction:column;
+  gap:var(--sp-3);flex:0 0 auto}
+.device .d-bar{height:6px;width:120px;background:var(--c-ink);border-radius:var(--r-pill);
+  margin:0 auto var(--sp-2)}
+.rec-card{border:var(--bw) solid var(--c-border);border-radius:var(--r-m);padding:var(--sp-4);
+  display:flex;flex-direction:column;gap:var(--sp-3);background:var(--c-surface-2)}
+.rec-card .rc-top{font-size:var(--fs-caption);color:var(--c-accent);font-weight:var(--fw-med);
+  letter-spacing:.1em;text-transform:uppercase}
+.rec-card .rc-name{font-size:var(--fs-h3);font-weight:var(--fw-bold)}
+.rec-line{display:flex;justify-content:space-between;font-size:var(--fs-caption);
+  color:var(--c-ink-2);gap:var(--sp-3)}
+.btn{border-radius:var(--r-pill);padding:14px var(--sp-4);font-size:var(--fs-small);
+  font-weight:var(--fw-med);text-align:center}
+.btn.primary{background:var(--c-accent);color:var(--c-on-accent)}
+.btn.ghost{background:var(--c-bg);border:var(--bw) solid var(--c-border-strong);color:var(--c-ink)}
+
+/* --- таймлайн проблемы (слайд 3) --------------------------------------- */
+.tl{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4);position:relative}
+.tl::before{content:"";position:absolute;left:0;right:0;top:34px;height:2px;
+  background:var(--c-border-strong)}
+.tl-item{position:relative;padding-top:var(--sp-8)}
+.tl-dot{position:absolute;top:26px;left:0;width:18px;height:18px;border-radius:50%;
+  background:var(--c-bg);border:3px solid var(--c-border-strong)}
+.tl-item.is-active .tl-dot{border-color:var(--c-accent);background:var(--c-accent)}
+.tl-week{position:absolute;top:0;left:0;font-size:var(--fs-caption);color:var(--c-ink-3);
+  font-weight:var(--fw-med);letter-spacing:.08em;text-transform:uppercase}
+
+/* --- сравнение А/Б (слайд 11) ------------------------------------------ */
+.ab{display:grid;grid-template-columns:1fr 1fr;gap:var(--grid-gutter);align-items:stretch}
+.ab-col{border:var(--bw) solid var(--c-border);border-radius:var(--r-l);overflow:hidden;
+  display:flex;flex-direction:column}
+.ab-col.pick{border-color:var(--c-accent);border-width:2px}
+.ab-head{padding:var(--sp-4) var(--sp-5);background:var(--c-surface);
+  display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3)}
+.ab-col.pick .ab-head{background:var(--c-accent-weak)}
+.ab-body{padding:var(--sp-4) var(--sp-5) var(--sp-5);display:flex;flex-direction:column;
+  gap:var(--sp-4);flex:1}
+.plus-minus{font-size:var(--fs-caption);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--c-ink-3);font-weight:var(--fw-med);margin-bottom:var(--sp-2)}
+ul.list{list-style:none;display:flex;flex-direction:column;gap:10px}
+ul.list li{font-size:var(--fs-small);line-height:1.34;color:var(--c-ink-2);
+  padding-left:22px;position:relative}
+ul.list li::before{content:"";position:absolute;left:0;top:11px;width:10px;height:2px;
+  background:var(--c-border-strong)}
+ul.list.minus li::before{background:var(--c-border-strong);opacity:.55}
+
+/* --- график / его заглушка --------------------------------------------- */
+.chart-box{position:relative;width:100%;height:100%;min-height:0}
+.chart-skeleton{display:flex;align-items:flex-end;gap:var(--sp-3);height:100%;
+  padding:var(--sp-4);border:1px dashed var(--c-ph-border);border-radius:var(--r-m);
+  background:var(--c-ph-bg);position:relative}
+.chart-skeleton .sk{flex:1;border:1px dashed var(--c-ph-border);border-radius:var(--r-s);
+  background:transparent}
+.chart-skeleton .sk-cap{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  text-align:center;font-size:var(--fs-small);color:var(--c-ph-ink)}
+
+/* --- гант (слайд 14), CSS Grid ----------------------------------------- */
+.gantt{display:flex;flex-direction:column;gap:6px;position:relative}
+.g-row{display:grid;grid-template-columns:360px 1fr;gap:var(--sp-4);align-items:center}
+.g-row.phase .g-track{min-height:54px}
+.g-label{font-size:var(--fs-small);color:var(--c-ink);font-weight:var(--fw-med);
+  display:flex;flex-direction:column;gap:2px;line-height:1.2}
+.g-label .g-sub{font-size:var(--fs-caption);color:var(--c-ink-3);font-weight:var(--fw-reg);
+  line-height:1.25}
+.g-track{display:grid;gap:0;position:relative;min-height:40px;align-items:center}
+.g-track.head{min-height:34px}
+.g-cell{border-left:var(--bw) solid var(--c-border);height:100%;grid-row:1}
+.g-cell:last-child{border-right:var(--bw) solid var(--c-border)}
+.g-qlabel{font-size:var(--fs-caption);color:var(--c-ink-3);padding:6px var(--sp-2);
+  grid-row:1;text-transform:uppercase;letter-spacing:.06em}
+.g-bar{grid-row:1;height:30px;border-radius:var(--r-s);display:flex;align-items:center;
+  padding:0 var(--sp-3);font-size:var(--fs-caption);color:var(--c-ink);
+  background:var(--c-surface);border:var(--bw) solid var(--c-border-strong);
+  margin:0 4px;overflow:hidden;white-space:nowrap}
+.g-bar.done{background:var(--c-ink);color:var(--c-on-accent);border-color:var(--c-ink)}
+.g-bar.mvp{background:var(--c-accent);color:var(--c-on-accent);border-color:var(--c-accent)}
+.g-bar.ghost{background:var(--c-ph-bg);border:1px dashed var(--c-ph-border);color:var(--c-ph-ink)}
+.g-bar.stream{height:24px;background:var(--c-bg);border-style:dashed;color:var(--c-ink-2)}
+.g-today{position:absolute;top:0;bottom:0;width:2px;background:var(--c-accent);z-index:3}
+.g-today span{position:absolute;top:-26px;left:-16px;font-size:var(--fs-caption);
+  color:var(--c-accent);font-weight:var(--fw-med)}
+.g-diamond{position:absolute;width:16px;height:16px;background:var(--c-bg);
+  border:2px solid var(--c-ink);transform:rotate(45deg) translateX(-50%);
+  transform-origin:left center;z-index:2}
+.g-diamond.ph{border-style:dashed;border-color:var(--c-ph-border);background:var(--c-ph-bg)}
+.g-legend{display:flex;gap:var(--sp-5);font-size:var(--fs-caption);color:var(--c-ink-3);
+  margin-top:var(--sp-3)}
+.g-legend i{display:inline-block;width:22px;height:10px;border-radius:3px;
+  margin-right:var(--sp-2);vertical-align:middle}
+
+/* --- титул --------------------------------------------------------------- */
+.cover{justify-content:space-between}
+.cover-mark{display:inline-flex;align-items:center;gap:var(--sp-3);font-size:var(--fs-h3);
+  font-weight:var(--fw-bold)}
+.cover-mark .dot{width:22px;height:22px;border-radius:6px;background:var(--c-accent)}
+.stamp{border:2px solid var(--c-ink);border-radius:var(--r-s);padding:8px var(--sp-3);
+  font-size:var(--fs-caption);letter-spacing:.14em;text-transform:uppercase;
+  font-weight:var(--fw-med)}
+
+/* ============================================================================
+   НАВИГАЦИЯ И ЗАМЕТКИ ДОКЛАДЧИКА (не печатаются)
+   ========================================================================== */
+#hud{position:fixed;right:20px;bottom:16px;z-index:50;display:flex;gap:var(--sp-3);
+  align-items:center;font-size:13px;color:var(--c-ink-3);font-family:var(--ff)}
+#hud b{color:var(--c-ink);font-variant-numeric:tabular-nums}
+#notes{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--c-ink);
+  color:#fff;padding:18px 28px;font-size:15px;line-height:1.5;display:none}
+#notes.on{display:block}
+#notes .n-h{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55;
+  margin-bottom:6px}
+
+/* ============================================================================
+   ПЕЧАТЬ В PDF: 1 слайд = 1 страница, ландшафт
+   ========================================================================== */
+@page{size:1920px 1080px;margin:0}
+@media print{
+  html,body{background:#fff;height:auto}
+  #stage{position:static;display:block;overflow:visible}
+  #deck{position:static;transform:none!important;width:auto;height:auto;left:auto;top:auto}
+  #hud,#notes{display:none!important}
+  .slide{position:relative;display:flex!important;page-break-after:always;break-after:page;
+    box-shadow:none}
+  .slide:last-child{page-break-after:auto;break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<div id="stage"><div id="deck">
+
+<!-- ═══ 01 ТИТУЛ ═══════════════════════════════════════════════════════ -->
+<section class="slide cover">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div class="cover-mark"><span class="dot"></span>Альфа-Банк · Цифровые продукты</div>
+    <div class="stamp">Правление · Комитет по цифровым продуктам</div>
+  </div>
+  <div>
+    <div class="kicker">Защита продукта · запрос на бюджет MVP</div>
+    <h1 style="font-size:var(--fs-display);max-width:1600px">Альфа-Партнёр<br>
+      <span style="font-weight:var(--fw-reg);color:var(--c-ink-2)">Сервис рекомендации контрагентов в Альфа-Босс</span></h1>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end">
+    <div class="stack-2">
+      <div class="t-cap">Авторы</div>
+      <div class="t-body ink"><span class="ph" data-ph>{{АВТОРЫ}}</span></div>
+    </div>
+    <div class="stack-2" style="text-align:right">
+      <div class="t-cap">Дата</div>
+      <div class="t-body ink"><span class="ph" data-ph>{{ДАТА ЗАЩИТЫ}}</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 02 EXECUTIVE SUMMARY ═══════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Executive summary</div>
+    <h1>Спрос проверен на 40 руководителях. Просим бюджет на MVP</h1>
+  </div>
+  <div class="body">
+    <div class="stack-4" style="max-width:1600px">
+      <div class="row" style="gap:var(--sp-5)">
+        <div class="stack-2"><div class="t-cap">Проблема</div>
+          <div class="t-body ink">Поиск контрагента у среднего бизнеса занимает около месяца.</div></div>
+        <div class="stack-2"><div class="t-cap">Решение</div>
+          <div class="t-body ink">Рекомендация контрагента в Альфа-Босс на транзакционных данных банка.</div></div>
+      </div>
+      <div class="row" style="gap:var(--sp-5)">
+        <div class="stack-2"><div class="t-cap">Подтверждение</div>
+          <div class="t-body ink">18 интервью и тест прототипа на 22 участниках: ключевые гипотезы подтвердились.</div></div>
+        <div class="stack-2"><div class="t-cap">Запрос</div>
+          <div class="t-body ink">Бюджет <span class="ph" data-ph>{{СУММА}}</span> и старт MVP <span class="ph" data-ph>{{ДАТА}}</span>.</div></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:var(--sp-7)">
+      <div class="stack-2"><div class="num accent">130 000</div>
+        <div class="metric-label">клиентов среднего и крупного бизнеса в базе</div></div>
+      <div class="stack-2"><div class="num">100%</div>
+        <div class="metric-label">транзакций внутри периметра банка видимы</div></div>
+      <div class="stack-2"><div class="num">каждый&nbsp;3-й</div>
+        <div class="metric-label">ЛПР уже присутствует в Альфа-Босс</div></div>
+      <div class="stack-2"><div class="num">~30 дней</div>
+        <div class="metric-label">текущий цикл поиска контрагента</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">Источники: внутренние данные банка; 18 глубинных интервью; тест прототипа (22 участника)</span><span>02</span></div>
+</section>
+
+<!-- ═══ 03 ПРОБЛЕМА ════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Проблема клиента</div>
+    <h1>Поиск нового контрагента занимает <em>около месяца</em></h1>
+  </div>
+  <div class="body">
+    <div class="num-l accent" style="margin-bottom:var(--sp-7)">~30 дней</div>
+    <div class="tl">
+      <div class="tl-item"><span class="tl-week">Этап 1</span><span class="tl-dot"></span>
+        <div class="stack-2"><div class="t-h3">Поиск кандидатов</div>
+          <div class="t-small">Открытые источники: данные неполные и неактуальные.</div></div></div>
+      <div class="tl-item"><span class="tl-week">Этап 2</span><span class="tl-dot"></span>
+        <div class="stack-2"><div class="t-h3">Проверка благонадёжности</div>
+          <div class="t-small">Отдельная работа, часто через платные сервисы.</div></div></div>
+      <div class="tl-item"><span class="tl-week">Этап 3</span><span class="tl-dot"></span>
+        <div class="stack-2"><div class="t-h3">Выход на ЛПР</div>
+          <div class="t-small">Нужно пройти секретаря и получить доступ к руководителю.</div></div></div>
+      <div class="tl-item is-active"><span class="tl-week">Этап 4</span><span class="tl-dot"></span>
+        <div class="stack-2"><div class="t-h3">Первый разговор</div>
+          <div class="t-small">Содержательный контакт — только после всех предыдущих этапов.</div></div></div>
+    </div>
+    <div class="t-body ink" style="margin-top:var(--sp-7)">
+      Итог: длинный цикл, высокая доля отказов, риск нарваться на недобросовестного контрагента.</div>
+  </div>
+  <div class="foot"><span class="src">Источник: 18 глубинных интервью с руководителями и собственниками бизнеса</span><span>03</span></div>
+</section>
+
+<!-- ═══ 04 ПОЧЕМУ ТОЛЬКО БАНК ══════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Актив банка</div>
+    <h1>Собрать такую рекомендацию может <em>только банк</em></h1>
+  </div>
+  <div class="body">
+    <div class="row" style="gap:var(--sp-5)">
+      <div class="card stack-3"><div class="num accent">130 000</div>
+        <div class="t-h3">клиентов среднего и крупного бизнеса</div>
+        <div class="t-small">Готовый пул кандидатов. Стоимость привлечения — нулевая.</div></div>
+      <div class="card stack-3"><div class="num">100%</div>
+        <div class="t-h3">транзакций внутри периметра</div>
+        <div class="t-small">Банк видит, кто с кем реально работает, в каких объёмах и с какой регулярностью. Плюс собственная оценка благонадёжности и риск-профиля.</div></div>
+      <div class="card stack-3"><div class="num">каждый 3-й</div>
+        <div class="t-h3">ЛПР уже в Альфа-Босс</div>
+        <div class="t-small">Канал доставки рекомендации до человека, принимающего решение, уже построен.</div></div>
+    </div>
+    <div class="t-body ink" style="margin-top:var(--sp-6);max-width:1500px">
+      Вывод: релевантность рекомендации подтверждается реальными денежными потоками, а не декларациями в каталоге.</div>
+  </div>
+  <div class="foot"><span class="src">Источник: внутренние данные банка</span><span>04</span></div>
+</section>
+
+<!-- ═══ 05 РЕШЕНИЕ ═════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Решение</div>
+    <h1>Альфа-Партнёр показывает контрагента там, где ЛПР уже работает</h1>
+  </div>
+  <div class="body">
+    <div style="display:flex;gap:var(--sp-8);align-items:center">
+      <div class="stack-4" style="flex:1">
+        <div class="t-body ink" style="font-size:var(--fs-h3);line-height:1.34">
+          B2B-сервис поиска и рекомендации контрагентов внутри клиентской базы банка.
+          Работает как функциональность Альфа-Босс и интернет-банка: ИИ-модель находит
+          паттерны закупочных и сбытовых связей и предлагает ЛПР конкретную компанию.
+          Контакт открывается только по обоюдному подтверждению.</div>
+        <div class="row" style="margin-top:var(--sp-4)">
+          <div class="stack-2"><div class="t-h3 accent">Без нового приложения</div>
+            <div class="t-small">Внутри Альфа-Босс и интернет-банка</div></div>
+          <div class="stack-2"><div class="t-h3">Контрагент верифицирован</div>
+            <div class="t-small">KYC банка пройден, риск-профиль известен</div></div>
+        </div>
+      </div>
+      <div class="device">
+        <div class="d-bar"></div>
+        <div class="t-cap" style="padding:0 var(--sp-2)">Альфа-Босс · Партнёры</div>
+        <div class="rec-card">
+          <div class="rc-top">Рекомендация</div>
+          <div class="rc-name"><span class="ph" data-ph>{{Название компании}}</span></div>
+          <div class="rec-line"><span>Отрасль</span><span class="ph" data-ph>{{—}}</span></div>
+          <div class="rec-line"><span>Регион</span><span class="ph" data-ph>{{—}}</span></div>
+          <div class="rec-line"><span>Проверка банка</span><span>пройдена</span></div>
+          <div class="t-cap" style="line-height:1.4">Совпадение по закупочным связям в вашей отрасли</div>
+          <div class="btn primary">Запросить общение</div>
+          <div class="btn ghost">Не интересно</div>
+        </div>
+        <div class="rec-card" style="opacity:.45">
+          <div class="rc-top">Рекомендация</div>
+          <div class="rc-name"><span class="ph" data-ph>{{Название компании}}</span></div>
+          <div class="rec-line"><span>Отрасль</span><span class="ph" data-ph>{{—}}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">Мокап собран на примитивах; финальный экран — по дизайн-системе Альфа-Босс</span><span>05</span></div>
+</section>
+
+<!-- ═══ 06 КАК РАБОТАЕТ ════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Как это работает</div>
+    <h1>От транзакции до диалога двух ЛПР — пять шагов</h1>
+  </div>
+  <div class="body">
+    <div class="flow">
+      <div class="node"><span class="n-idx">01</span><span class="n-title">Данные банка</span>
+        <span class="n-text">Транзакции, отраслевые связи, оценка благонадёжности и риск-профиль.</span></div>
+      <div class="arrow"></div>
+      <div class="node"><span class="n-idx">02</span><span class="n-title">ИИ-модель</span>
+        <span class="n-text">Находит паттерны закупочных и сбытовых связей.</span></div>
+      <div class="arrow"></div>
+      <div class="node"><span class="n-idx">03</span><span class="n-title">Рекомендация</span>
+        <span class="n-text">Карточка контрагента в Альфа-Босс у ЛПР.</span></div>
+      <div class="arrow"></div>
+      <div class="node is-active"><span class="n-idx">04</span><span class="n-title">Обоюдное подтверждение</span>
+        <span class="n-text">Вторая сторона подтверждает готовность к контакту.</span></div>
+      <div class="arrow"></div>
+      <div class="node"><span class="n-idx">05</span><span class="n-title">Чат ЛПР ↔ ЛПР</span>
+        <span class="n-text">Прямой диалог двух руководителей внутри приложения.</span></div>
+    </div>
+    <div class="t-body ink" style="margin-top:var(--sp-7);max-width:1500px">
+      Ключевое отличие от каталогов: релевантность подтверждена денежными потоками, а вход в диалог — согласием обеих сторон.</div>
+  </div>
+  <div class="foot"><span class="src">Источник: продуктовая концепция, проверенная на тесте прототипа</span><span>06</span></div>
+</section>
+
+<!-- ═══ 07 ТРИ СЦЕНАРИЯ ════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Сценарии использования</div>
+    <h1>Три входа в сервис, один и тот же механизм контакта</h1>
+  </div>
+  <div class="body">
+    <div class="row" style="gap:var(--sp-5);align-items:stretch">
+      <div class="card stack-4">
+        <div><div class="t-cap">Сценарий 1</div><div class="t-h2">Проактивная рекомендация</div></div>
+        <div class="stack-2">
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">ЛПР получает рекомендацию в Альфа-Босс</span></div>
+          <div class="arrow v"></div>
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Запрашивает общение в чате</span></div>
+          <div class="arrow v"></div>
+          <div class="node is-active" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Вторая сторона подтверждает</span></div>
+          <div class="arrow v"></div>
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Открывается чат ЛПР ↔ ЛПР</span></div>
+        </div>
+      </div>
+      <div class="card stack-4">
+        <div><div class="t-cap">Сценарий 2</div><div class="t-h2">Активный поиск</div></div>
+        <div class="stack-2">
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">ЛПР задаёт параметры поиска</span></div>
+          <div class="arrow v"></div>
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Система выдаёт подходящие компании</span></div>
+          <div class="arrow v"></div>
+          <div class="node is-active" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Запрос на контакт и подтверждение</span></div>
+          <div class="arrow v"></div>
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Открывается чат ЛПР ↔ ЛПР</span></div>
+        </div>
+      </div>
+      <div class="card stack-4">
+        <div><div class="t-cap">Сценарий 3</div><div class="t-h2">Поиск силами сотрудника</div></div>
+        <div class="stack-2">
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Сотрудник ведёт поиск в интернет-банке</span></div>
+          <div class="arrow v"></div>
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Результат уходит ЛПР в Альфа-Босс</span></div>
+          <div class="arrow v"></div>
+          <div class="node is-active" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">ЛПР запрашивает доступ к чату</span></div>
+          <div class="arrow v"></div>
+          <div class="node" style="min-height:0;padding:var(--sp-3)"><span class="n-text ink">Чат ЛПР ↔ ЛПР второй стороны</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">Во всех трёх сценариях контакт открывается только по обоюдному подтверждению</span><span>07</span></div>
+</section>
+
+<!-- ═══ 08 ОБОЮДНОЕ ПОДТВЕРЖДЕНИЕ ══════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Механика доверия</div>
+    <h1>Контакт открывается только при согласии <em>обеих сторон</em></h1>
+  </div>
+  <div class="body">
+    <div style="display:grid;grid-template-columns:1fr 260px 1fr;gap:var(--sp-5);align-items:center">
+      <div class="stack-3">
+        <div class="node"><span class="n-idx">Сторона А</span><span class="n-title">ЛПР инициатор</span>
+          <span class="n-text">Видит рекомендацию или находит компанию сам. Отправляет запрос на общение.</span></div>
+      </div>
+      <div class="stack-3" style="align-items:center;text-align:center">
+        <div class="arrow" style="width:100%;flex:none"></div>
+        <div class="card accent stack-2" style="width:100%;text-align:center">
+          <div class="t-h3 accent">Хендшейк</div>
+          <div class="t-small">Обе стороны подтвердили</div>
+        </div>
+        <div class="arrow" style="width:100%;flex:none;transform:scaleX(-1)"></div>
+      </div>
+      <div class="stack-3">
+        <div class="node"><span class="n-idx">Сторона Б</span><span class="n-title">ЛПР получатель</span>
+          <span class="n-text">Получает запрос в Альфа-Босс. Подтверждает или отклоняет.</span></div>
+      </div>
+    </div>
+    <div class="node is-active" style="margin-top:var(--sp-5);align-items:center;text-align:center;min-height:0;padding:var(--sp-4)">
+      <span class="n-title">Чат ЛПР ↔ ЛПР открывается</span>
+      <span class="n-text">Только после подтверждения. Без согласия второй стороны контактных данных не появляется.</span>
+    </div>
+    <div class="row" style="margin-top:var(--sp-6)">
+      <div class="stack-2"><div class="t-h3">Нет спама</div>
+        <div class="t-small">Односторонняя рассылка предложений технически невозможна.</div></div>
+      <div class="stack-2"><div class="t-h3">Легитимный вход в диалог</div>
+        <div class="t-small">Обе стороны заранее выразили интерес — разговор начинается по существу.</div></div>
+      <div class="stack-2"><div class="t-h3">Обе стороны верифицированы</div>
+        <div class="t-small">KYC банка пройден, ЛПР идентифицирован в Альфа-Босс.</div></div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">Принцип подтверждён на тесте прототипа (22 участника)</span><span>08</span></div>
+</section>
+
+<!-- ═══ 09 СПРОС ═══════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Подтверждение спроса</div>
+    <h1>Мы выходим не с идеей, а с проверенной гипотезой</h1>
+  </div>
+  <div class="body">
+    <div style="display:grid;grid-template-columns:520px 1fr;gap:var(--sp-8);align-items:center">
+      <div class="stack-4">
+        <div class="stack-2"><div class="num-hero accent">18</div>
+          <div class="metric-label">глубинных интервью с руководителями и собственниками бизнеса</div></div>
+        <div class="stack-2"><div class="num-l">22</div>
+          <div class="metric-label">участника теста прототипа</div></div>
+      </div>
+      <div class="card stack-4">
+        <div class="t-h2">Все ключевые гипотезы подтвердились</div>
+        <ul class="list">
+          <li><span class="ph" data-ph>{{Г1 — формулировка гипотезы}}</span></li>
+          <li><span class="ph" data-ph>{{Г2 — формулировка гипотезы}}</span></li>
+          <li><span class="ph" data-ph>{{Г3 — формулировка гипотезы}}</span></li>
+          <li><span class="ph" data-ph>{{Г4 — формулировка гипотезы}}</span></li>
+        </ul>
+        <div class="t-cap">Формулировки подставляются из отчёта по исследованию — в брифе их точных редакций нет.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">Источник: отчёт Discovery — 18 интервью, тест прототипа на 22 участниках</span><span>09</span></div>
+</section>
+
+<!-- ═══ 10 ЦЕЛЕВАЯ АУДИТОРИЯ ═══════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Целевая аудитория</div>
+    <h1>Средний бизнес с выручкой группы <em>от 500 млн ₽</em></h1>
+  </div>
+  <div class="body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-8);align-items:start">
+      <div class="stack-4">
+        <div class="stack-2"><div class="num-hero accent">500 млн ₽</div>
+          <div class="metric-label">совокупная годовая выручка группы компаний — нижняя граница сегмента</div></div>
+        <div class="card stack-3">
+          <div class="t-h3">Кто принимает решение</div>
+          <div class="t-small">Руководители и собственники компаний и групп компаний. Решение о новом контрагенте принимают лично — делегируется только сбор кандидатов (сценарий 3).</div>
+        </div>
+      </div>
+      <div class="stack-4">
+        <div class="card stack-3"><div class="t-h2">130 000</div>
+          <div class="t-small">клиентов среднего и крупного бизнеса в базе банка — источник и кандидатов, и спроса</div></div>
+        <div class="card stack-3"><div class="t-h2">Каждый 3-й ЛПР</div>
+          <div class="t-small">уже присутствует в Альфа-Босс: канал до принимающего решение построен</div></div>
+        <div class="card stack-3"><div class="t-h2"><span class="ph" data-ph>{{N}}</span></div>
+          <div class="t-small">компаний в сегменте «выручка группы от 500 млн ₽» — уточняется по внутренней сегментации</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">Источники: внутренние данные банка; 18 глубинных интервью</span><span>10</span></div>
+</section>
+
+<!-- ═══ 11 ВНУТРЕННИЙ ИЛИ ВНЕШНИЙ ══════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Развилка · решение Правления</div>
+    <h1>Стартуем как внутренний сервис — <em>внешний контур остаётся открытым</em></h1>
+  </div>
+  <div class="body top">
+    <div class="ab">
+      <div class="ab-col pick">
+        <div class="ab-head"><div class="t-h2">А. Внутренний сервис</div>
+          <div class="tag" style="background:var(--c-accent);color:var(--c-on-accent)">Рекомендация</div></div>
+        <div class="ab-body">
+          <div><div class="plus-minus">Плюсы</div>
+            <ul class="list">
+              <li>Полный доступ к транзакционным данным без внешних интеграций — качество рекомендаций максимальное</li>
+              <li>Данные не покидают периметр: проще правовая конструкция и режим банковской тайны</li>
+              <li>KYC пройден, ЛПР верифицирован — доверие заложено «из коробки»</li>
+              <li>Нулевая стоимость привлечения: 130 тыс. клиентов и готовый канал Альфа-Босс</li>
+              <li>Переиспользование инфраструктуры (авторизация, чат, дизайн-система) — короткий time-to-market</li>
+              <li>Усиливает позицию Альфа-Босс, работает на удержание и обороты в банке</li>
+            </ul></div>
+          <div><div class="plus-minus">Минусы</div>
+            <ul class="list minus">
+              <li>Пул кандидатов ограничен клиентской базой — в узких отраслях и регионах покрытие может быть недостаточным</li>
+              <li>Сложнее монетизировать напрямую: воспринимается как часть банковского пакета</li>
+              <li>Требуется аккуратная работа с согласиями и банковской тайной; возможен вопрос о конфликте интересов</li>
+            </ul></div>
+        </div>
+      </div>
+      <div class="ab-col">
+        <div class="ab-head"><div class="t-h2">Б. Внешняя платформа</div>
+          <div class="tag">Опция следующей фазы</div></div>
+        <div class="ab-body">
+          <div><div class="plus-minus">Плюсы</div>
+            <ul class="list">
+              <li>Охват не ограничен клиентами Альфа — потенциальный рынок кратно больше</li>
+              <li>Собственная монетизация (подписка, комиссия за сделку) и самостоятельная оценка актива</li>
+              <li>Нейтральное позиционирование позволяет привлечь клиентов других банков</li>
+            </ul></div>
+          <div><div class="plus-minus">Минусы</div>
+            <ul class="list minus">
+              <li>Нужны интеграции с другими банками и внешними данными; без развитого open banking — дорого, долго или невозможно</li>
+              <li>Без транзакционного ядра качество падает до уровня справочников по открытым данным</li>
+              <li>Отдельный бренд и маркетинговый бюджет: теряется главный дистрибуционный актив — доверие к бренду банка</li>
+              <li>Отдельный юридический контур, передача данных за периметр, более тяжёлый комплаенс</li>
+              <li>Заметно более длинный time-to-market</li>
+            </ul></div>
+        </div>
+      </div>
+    </div>
+    <div class="card accent" style="margin-top:var(--sp-4)">
+      <div class="t-body ink">Выбор А не закрывает дорогу к Б: на фазе развития приглашение не-клиентов по инвайту ЛПР превращает сервис в канал привлечения новых клиентов в банк.</div>
+    </div>
+  </div>
+  <div class="foot"><span class="src">Оценка вариантов — продуктовая команда; решение выносится на Правление</span><span>11</span></div>
+</section>
+
+<!-- ═══ 12 БИЗНЕС-ЭФФЕКТЫ ══════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Бизнес-эффекты</div>
+    <h1 id="s12-title">Эффект <span class="ph">{{ИТОГО, млн ₽}}</span> в год на горизонте <span class="ph">{{N}}</span> лет</h1>
+  </div>
+  <div class="body top">
+    <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:var(--sp-6);align-items:start">
+      <div id="s12-table"></div>
+      <div class="stack-4">
+        <div style="height:330px"><div class="chart-box" id="s12-chart"></div></div>
+        <div class="t-cap">Waterfall: вклад каждого типа эффекта в итог</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:var(--sp-5)" id="s12-tiles"></div>
+    <div class="card plain" style="margin-top:var(--sp-4);padding:var(--sp-3) var(--sp-5)" id="s12-fin"></div>
+  </div>
+  <div class="foot"><span class="src">Цифры подставляются из финансовой модели; структура эффектов — финальная</span><span>12</span></div>
+</section>
+
+<!-- ═══ 13 БЮДЖЕТ ══════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Бюджет</div>
+    <h1 id="s13-title">Бюджет <span class="ph">{{ИТОГО, млн ₽}}</span> на <span class="ph">{{период}}</span></h1>
+  </div>
+  <div class="body top">
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:var(--sp-6);align-items:start">
+      <div id="s13-table"></div>
+      <div class="stack-4">
+        <div style="height:340px"><div class="chart-box" id="s13-chart"></div></div>
+        <div class="t-cap">Распределение бюджета по годам с накоплением по статьям</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:var(--sp-5)" id="s13-tiles"></div>
+    <div style="margin-top:var(--sp-4)" class="t-small" id="s13-note"></div>
+  </div>
+  <div class="foot"><span class="src">Структура статей — финальная; суммы подставляются после оценки командой</span><span>13</span></div>
+</section>
+
+<!-- ═══ 14 ДОРОЖНАЯ КАРТА ══════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Дорожная карта</div>
+    <h1 id="s14-title">Первая ценность клиенту — через <span class="ph">{{N}}</span> месяцев после старта</h1>
+  </div>
+  <div class="body top">
+    <div id="s14-gantt"></div>
+    <div class="g-legend">
+      <span><i style="background:var(--c-ink)"></i>Пройдено</span>
+      <span><i style="background:var(--c-accent)"></i>MVP — предмет запроса</span>
+      <span><i style="background:var(--c-surface);border:1px solid var(--c-border-strong)"></i>Последующие фазы</span>
+      <span><i style="background:var(--c-bg);border:1px dashed var(--c-border-strong)"></i>Параллельные потоки</span>
+      <span><i style="background:var(--c-ph-bg);border:1px dashed var(--c-ph-border)"></i>Период не определён</span>
+    </div>
+    <div style="margin-top:var(--sp-5)" id="s14-gates"></div>
+  </div>
+  <div class="foot"><span class="src">Переход между фазами — только через gate-критерий; Discovery пройден</span><span>14</span></div>
+</section>
+
+<!-- ═══ 15 РИСКИ ═══════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Риски</div>
+    <h1>Пять рисков, которые мы видим, и как их снимаем</h1>
+  </div>
+  <div class="body top">
+    <table>
+      <thead><tr><th style="width:26%">Риск</th><th style="width:37%">В чём именно</th><th style="width:37%">Митигация</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Регуляторика и банковская тайна</td>
+          <td>Рекомендация строится на транзакционных данных клиентов.</td>
+          <td>Данные не покидают периметр банка. Юридический контур — отдельный поток на дорожной карте, gate до старта пилота.</td></tr>
+        <tr><td class="name">Согласия клиентов</td>
+          <td>Использование данных и раскрытие компании второй стороне требуют согласия.</td>
+          <td>Явное согласие на участие; контакт открывается только по обоюдному подтверждению двух ЛПР.</td></tr>
+        <tr><td class="name">Качество рекомендаций на старте</td>
+          <td>Пул ограничен клиентской базой; в узких отраслях и регионах покрытие может быть недостаточным.</td>
+          <td>MVP на ограниченном сегменте, где плотность связей выше. Замер конверсии в контакт — gate-критерий пилота.</td></tr>
+        <tr><td class="name">Каннибализация внимания в Альфа-Босс</td>
+          <td>Новая функция конкурирует за внимание ЛПР с текущими сценариями приложения.</td>
+          <td>Проактивная рекомендация ограничена по частоте; замер влияния на ключевые сценарии Альфа-Босс в пилоте.</td></tr>
+        <tr><td class="name">Восприятие «банк навязывает контрагентов»</td>
+          <td>Возможен вопрос о конфликте интересов.</td>
+          <td>Рекомендация основана на транзакционных паттернах, отказ в один тап, вход в диалог — только по согласию обеих сторон.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="foot"><span class="src">Риски и митигации — продуктовая команда; юридическая позиция подтверждается на gate MVP</span><span>15</span></div>
+</section>
+
+<!-- ═══ 16 ЗАПРОС ══════════════════════════════════════════════════════ -->
+<section class="slide">
+  <div class="head">
+    <div class="kicker">Решение, которое просим принять</div>
+    <h1>Утвердить бюджет и старт фазы MVP</h1>
+  </div>
+  <div class="body">
+    <div class="stack-4" id="s16-ask"></div>
+  </div>
+  <div class="foot"><span class="src">Альфа-Партнёр · Правление / Комитет по цифровым продуктам</span><span>16</span></div>
+</section>
+
+</div></div>
+
+<div id="hud"><span><b id="hud-n">1</b> / 16</span><span>← → навигация · N заметки · F фуллскрин · P печать</span></div>
+<div id="notes"><div class="n-h">Заметки докладчика</div><div id="notes-body"></div></div>
+
+<script>
+/* ============================================================================
+   DECK_DATA — единственное место, где живут цифры слайдов 12, 13, 14.
+   null → на слайде автоматически рисуется плейсхолдер {{—}}.
+   Разметку править НЕ нужно: таблицы, плитки, графики и гант строятся отсюда.
+   ========================================================================== */
+const DECK_DATA = {
+
+  /* ---------------------------------------------------------------------- */
+  /* СЛАЙД 12 — БИЗНЕС-ЭФФЕКТЫ                                              */
+  /* ---------------------------------------------------------------------- */
+  effects: {
+    horizonYears: null,      // {{N}} — горизонт оценки, лет (в заголовок слайда)
+    totalPerYear: null,      // {{ИТОГО, млн ₽}} — эффект в год (в заголовок слайда)
+
+    // Строки таблицы эффектов. metric — текст метрики (строка либо null);
+    // y1/y2/y3 — эффект по годам, млн ₽ (число либо null).
+    rows: [
+      { type:'Прямой доход',   name:'Монетизация сервиса',                      metric:null, /* {{модель монетизации}} */ y1:null, y2:null, y3:null },
+      { type:'Косвенный доход',name:'Рост транзакционных оборотов клиентов',    metric:null, /* {{Δ оборота, %}}      */ y1:null, y2:null, y3:null },
+      { type:'Косвенный доход',name:'Привлечение новых клиентов по инвайту',    metric:null, /* {{кол-во клиентов}}   */ y1:null, y2:null, y3:null },
+      { type:'Удержание',      name:'Снижение оттока в сегменте',               metric:null, /* {{Δ churn, п.п.}}     */ y1:null, y2:null, y3:null },
+      { type:'Кредитный',      name:'Рост выдач за счёт нового объёма сделок',  metric:null, /* {{млн ₽}}             */ y1:null, y2:null, y3:null }
+    ],
+    // Итог по годам. Если оставить null — считается автоматически из rows,
+    // когда все значения года заполнены.
+    totals: { y1:null, y2:null, y3:null },
+
+    // Клиентские метрики (три плитки).
+    client: {
+      searchDaysBefore: 30,  // факт из брифа, не менять без источника
+      searchDaysAfter: null, // {{X}} дней
+      contactSuccess: null,  // {{X}} % успешных контактов
+      npsBefore: null,       // {{было}}
+      npsAfter: null         // {{стало}}
+    },
+
+    // Финансовые показатели (строка внизу слайда).
+    finance: { npv:null, irr:null, paybackMonths:null },
+
+    /* ДАННЫЕ ДЛЯ WATERFALL — отдельный массив, заменяется независимо.
+       value — вклад типа эффекта в годовой итог, млн ₽.
+       График рисуется только когда заполнены ВСЕ значения; иначе — скелет. */
+    waterfall: [
+      { label:'Монетизация',        value:null },
+      { label:'Обороты',            value:null },
+      { label:'Новые клиенты',      value:null },
+      { label:'Удержание',          value:null },
+      { label:'Кредитный эффект',   value:null }
+      // итоговый столбец «Итого» добавляется автоматически
+    ]
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* СЛАЙД 13 — БЮДЖЕТ                                                      */
+  /* ---------------------------------------------------------------------- */
+  budget: {
+    total: null,        // {{ИТОГО, млн ₽}} — в заголовок слайда
+    period: null,       // {{период}} — например «3 года» (в заголовок слайда)
+
+    // kind: 'OPEX' | 'CAPEX' | null (для резерва). fte — число или null,
+    // '—' ставится автоматически там, где FTE не применим (fte:false).
+    rows: [
+      { name:'Продукт и аналитика',              kind:'OPEX',  fte:null, y1:null, y2:null, y3:null },
+      { name:'Дизайн',                           kind:'OPEX',  fte:null, y1:null, y2:null, y3:null },
+      { name:'Разработка (frontend/backend)',    kind:'OPEX',  fte:null, y1:null, y2:null, y3:null },
+      { name:'Data Science / ML-модель',         kind:'OPEX',  fte:null, y1:null, y2:null, y3:null },
+      { name:'Инфраструктура и данные',          kind:'CAPEX', fte:false,y1:null, y2:null, y3:null },
+      { name:'Юридическая поддержка и комплаенс',kind:'OPEX',  fte:null, y1:null, y2:null, y3:null },
+      { name:'Маркетинг и коммуникации',         kind:'OPEX',  fte:false,y1:null, y2:null, y3:null },
+      { name:'Резерв',                           kind:null,    fte:false,y1:null, y2:null, y3:null }
+    ],
+    totals: { fte:null, y1:null, y2:null, y3:null }, // null → считается из rows
+
+    capex: null,        // сводная плитка CAPEX, млн ₽
+    opex: null,         // сводная плитка OPEX, млн ₽
+    teamFte: null,      // сводная плитка «Команда, FTE»
+    reuseSaving: null   // сноска: экономия на переиспользовании инфраструктуры, млн ₽
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* СЛАЙД 14 — ДОРОЖНАЯ КАРТА                                              */
+  /* ---------------------------------------------------------------------- */
+  roadmap: {
+    firstValueMonths: null,   // {{N}} месяцев до первой ценности (в заголовок)
+
+    // Подписи колонок ганта. null → {{Q}}. Количество колонок = длина массива.
+    quarters: [null,null,null,null,null,null,null,null],
+
+    // Позиция линии «сегодня» как доля ширины ганта, 0..1.
+    todayAt: 0.02,
+
+    // Фазы. startQ/endQ — номера колонок с 1; null → рисуется ghost-полоса
+    // на «предполагаемом» месте (пунктиром), период на ней — плейсхолдер.
+    phases: [
+      { n:'0. Discovery',       startQ:null, endQ:null, period:'Завершён', state:'done',
+        content:'18 интервью, тест прототипа, гипотезы подтверждены', gate:'✅ Пройден' },
+      { n:'1. MVP',             startQ:null, endQ:null, period:null, state:'mvp',
+        content:'Сценарий 1 (проактивная рекомендация) + чат ЛПР↔ЛПР, ограниченный сегмент', gate:null },
+      { n:'2. Пилот',           startQ:null, endQ:null, period:null, state:'next',
+        content:'{{N}} клиентов, замер конверсии в контакт и в сделку', gate:null },
+      { n:'3. Масштабирование', startQ:null, endQ:null, period:null, state:'next',
+        content:'Сценарии 2 и 3, вся база 130 тыс., интернет-банк', gate:null },
+      { n:'4. Развитие',        startQ:null, endQ:null, period:null, state:'next',
+        content:'Монетизация, внешний контур по инвайту', gate:null }
+    ],
+
+    // Параллельные потоки — отдельная визуальная дорожка (пунктир).
+    streams: [
+      { n:'ML-модель',                    startQ:null, endQ:null },
+      { n:'Юридический контур и согласия', startQ:null, endQ:null },
+      { n:'Интеграция с Альфа-Босс',      startQ:null, endQ:null }
+    ],
+
+    // Вехи-ромбы. at — доля ширины ганта 0..1; null → распределяются равномерно
+    // и рисуются пунктиром как неопределённые.
+    milestones: [
+      { label:'{{Веха 1}}', at:null },
+      { label:'{{Веха 2}}', at:null },
+      { label:'{{Веха 3}}', at:null }
+    ]
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* СЛАЙД 16 — ЗАПРОС                                                      */
+  /* ---------------------------------------------------------------------- */
+  ask: {
+    budget:null,   // {{СУММА}}
+    team:null,     // {{FTE}}
+    start:null,    // {{ДАТА}}
+    gate:null      // {{GATE}} — следующая точка контроля
+  }
+};
+
+/* ============================================================================
+   ХЕЛПЕРЫ ВЫВОДА
+   ========================================================================== */
+const nf = new Intl.NumberFormat('ru-RU');
+const ph  = (t='—') => `<span class="ph">{{${t}}}</span>`;
+const val = (v, t='—', suffix='') => (v===null||v===undefined) ? ph(t)
+            : `${typeof v==='number'?nf.format(v):v}${suffix}`;
+const filled = a => a.every(v => v!==null && v!==undefined);
+
+/* --- слайд 12 ----------------------------------------------------------- */
+(function s12(){
+  const d = DECK_DATA.effects;
+  const sumY = k => { const vs = d.rows.map(r=>r[k]); return filled(vs) ? vs.reduce((a,b)=>a+b,0) : null; };
+  const tot = { y1: d.totals.y1 ?? sumY('y1'), y2: d.totals.y2 ?? sumY('y2'), y3: d.totals.y3 ?? sumY('y3') };
+
+  document.getElementById('s12-title').innerHTML =
+    `Эффект ${val(d.totalPerYear,'ИТОГО, млн ₽')} в год на горизонте ${val(d.horizonYears,'N')} лет`;
+
+  document.getElementById('s12-table').innerHTML = `
+    <table>
+      <thead><tr><th style="width:19%">Тип эффекта</th><th style="width:31%">Эффект</th>
+        <th style="width:20%">Метрика</th><th class="n">Год 1</th><th class="n">Год 2</th><th class="n">Год 3</th></tr></thead>
+      <tbody>
+        ${d.rows.map(r=>`<tr class="group">
+          <td>${r.type}</td><td class="name">${r.name}</td><td>${val(r.metric,'метрика')}</td>
+          <td class="n">${val(r.y1)}</td><td class="n">${val(r.y2)}</td><td class="n">${val(r.y3)}</td></tr>`).join('')}
+        <tr class="total"><td colspan="3">Итого, млн ₽</td>
+          <td class="n">${val(tot.y1)}</td><td class="n">${val(tot.y2)}</td><td class="n">${val(tot.y3)}</td></tr>
+      </tbody>
+    </table>`;
+
+  const c = d.client;
+  document.getElementById('s12-tiles').innerHTML = `
+    <div class="card stack-2"><div class="t-h2">${c.searchDaysBefore} дней → ${val(c.searchDaysAfter,'X')} дней</div>
+      <div class="metric-label">Время поиска контрагента</div></div>
+    <div class="card stack-2"><div class="t-h2">${val(c.contactSuccess,'X')}%</div>
+      <div class="metric-label">Доля успешных контактов</div></div>
+    <div class="card stack-2"><div class="t-h2">${val(c.npsBefore,'было')} → ${val(c.npsAfter,'стало')}</div>
+      <div class="metric-label">NPS сегмента</div></div>`;
+
+  const f = d.finance;
+  document.getElementById('s12-fin').innerHTML =
+    `<span class="t-body ink">NPV ${val(f.npv)} · IRR ${val(f.irr)} · Срок окупаемости ${val(f.paybackMonths)} мес.</span>`;
+
+  // Waterfall: рисуем только при полных данных, иначе — размеченный скелет.
+  const wf = d.waterfall, box = document.getElementById('s12-chart');
+  if (filled(wf.map(x=>x.value))) {
+    const cv = document.createElement('canvas'); box.appendChild(cv);
+    let acc = 0; const bars = wf.map(x=>{ const s=acc; acc+=x.value; return [s,acc]; });
+    new Chart(cv, {
+      type:'bar',
+      data:{ labels:[...wf.map(x=>x.label),'Итого'],
+        datasets:[{ data:[...bars,[0,acc]],
+          backgroundColor:[...wf.map(()=>css('--c-accent-2')), css('--c-accent')],
+          borderRadius:4, barPercentage:.72 }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{ x:{grid:{display:false},ticks:{color:css('--c-ink-2'),font:{size:13}}},
+                 y:{grid:{color:css('--c-border')},ticks:{color:css('--c-ink-3'),font:{size:13}}} } }
+    });
+  } else {
+    box.innerHTML = `<div class="chart-skeleton">
+      ${[38,52,64,72,80,96].map(h=>`<div class="sk" style="height:${h}%"></div>`).join('')}
+      <div class="sk-cap">{{данные waterfall}} — DECK_DATA.effects.waterfall</div></div>`;
+  }
+})();
+
+/* --- слайд 13 ----------------------------------------------------------- */
+(function s13(){
+  const d = DECK_DATA.budget;
+  const rowTotal = r => filled([r.y1,r.y2,r.y3]) ? r.y1+r.y2+r.y3 : null;
+  const sumY = k => { const vs = d.rows.map(r=>r[k]); return filled(vs) ? vs.reduce((a,b)=>a+b,0) : null; };
+  const tot = { y1:d.totals.y1 ?? sumY('y1'), y2:d.totals.y2 ?? sumY('y2'), y3:d.totals.y3 ?? sumY('y3') };
+  const grand = filled([tot.y1,tot.y2,tot.y3]) ? tot.y1+tot.y2+tot.y3 : null;
+  const fteCell = r => r.fte===false ? '—' : val(r.fte);
+
+  document.getElementById('s13-title').innerHTML =
+    `Бюджет ${val(d.total,'ИТОГО, млн ₽')} на ${val(d.period,'период')}`;
+
+  document.getElementById('s13-table').innerHTML = `
+    <table>
+      <thead><tr><th style="width:34%">Статья</th><th style="width:12%">Тип</th><th class="n">FTE</th>
+        <th class="n">Год 1</th><th class="n">Год 2</th><th class="n">Год 3</th><th class="n">Итого</th></tr></thead>
+      <tbody>
+        ${d.rows.map(r=>`<tr>
+          <td class="name">${r.name}</td><td>${r.kind ?? '—'}</td><td class="n">${fteCell(r)}</td>
+          <td class="n">${val(r.y1)}</td><td class="n">${val(r.y2)}</td><td class="n">${val(r.y3)}</td>
+          <td class="n">${val(rowTotal(r))}</td></tr>`).join('')}
+        <tr class="total"><td colspan="2">Итого, млн ₽</td><td class="n">${val(d.totals.fte)}</td>
+          <td class="n">${val(tot.y1)}</td><td class="n">${val(tot.y2)}</td><td class="n">${val(tot.y3)}</td>
+          <td class="n">${val(grand)}</td></tr>
+      </tbody>
+    </table>`;
+
+  document.getElementById('s13-tiles').innerHTML = `
+    <div class="card stack-2"><div class="t-h2">${val(d.capex)}</div><div class="metric-label">CAPEX, млн ₽</div></div>
+    <div class="card stack-2"><div class="t-h2">${val(d.opex)}</div><div class="metric-label">OPEX, млн ₽</div></div>
+    <div class="card stack-2"><div class="t-h2">${val(d.teamFte)}</div><div class="metric-label">Команда, FTE</div></div>`;
+
+  document.getElementById('s13-note').innerHTML =
+    `Экономия за счёт переиспользования инфраструктуры Альфа-Босс: ${val(d.reuseSaving)} млн ₽`;
+
+  const box = document.getElementById('s13-chart');
+  const allNums = d.rows.flatMap(r=>[r.y1,r.y2,r.y3]);
+  if (filled(allNums)) {
+    const cv = document.createElement('canvas'); box.appendChild(cv);
+    const shades = ['--c-accent','--c-accent-2','--c-ink-2','--c-ink-3','--c-border-strong',
+                    '--c-accent','--c-accent-2','--c-ink-2'];
+    new Chart(cv, {
+      type:'bar',
+      data:{ labels:['Год 1','Год 2','Год 3'],
+        datasets: d.rows.map((r,i)=>({ label:r.name, data:[r.y1,r.y2,r.y3],
+          backgroundColor:css(shades[i%shades.length]), borderRadius:3, barPercentage:.6 })) },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11},color:css('--c-ink-2')}}},
+        scales:{ x:{stacked:true,grid:{display:false},ticks:{color:css('--c-ink-2')}},
+                 y:{stacked:true,grid:{color:css('--c-border')},ticks:{color:css('--c-ink-3')}} } }
+    });
+  } else {
+    box.innerHTML = `<div class="chart-skeleton">
+      ${[55,78,90].map(h=>`<div class="sk" style="height:${h}%"></div>`).join('')}
+      <div class="sk-cap">{{данные по статьям и годам}} — DECK_DATA.budget.rows</div></div>`;
+  }
+})();
+
+/* --- слайд 14: гант на CSS Grid (колонка подписей 360px + дорожки) ----- */
+(function s14(){
+  const d = DECK_DATA.roadmap, N = d.quarters.length;
+  document.getElementById('s14-title').innerHTML =
+    `Первая ценность клиенту — через ${val(d.firstValueMonths,'N')} месяцев после старта`;
+
+  const cells = () => Array.from({length:N},()=>'<div class="g-cell"></div>').join('');
+  const bar = (o, cls, label, ghostFrom) => {
+    const known = o.startQ!==null && o.endQ!==null;
+    const s = known ? o.startQ : ghostFrom.s, e = known ? o.endQ : ghostFrom.e;
+    return `<div class="g-bar ${known?cls:'ghost'}"
+      style="grid-column:${Math.max(1,s)} / ${Math.min(N,e)+1}">${label}</div>`;
+  };
+
+  const head = `<div class="g-row"><div class="g-label"></div>
+    <div class="g-track head" style="grid-template-columns:repeat(${N},1fr)">
+      ${d.quarters.map((q,i)=>`<div class="g-cell" style="grid-column:${i+1}"></div>`).join('')}
+      ${d.quarters.map((q,i)=>`<div class="g-qlabel" style="grid-column:${i+1}">${q ?? ph('Q'+(i+1))}</div>`).join('')}
+    </div></div>`;
+
+  // Ghost-раскладка: фазы идут последовательно, потоки — сквозные.
+  const span = Math.max(2, Math.floor(N/d.phases.length));
+  const phaseRows = d.phases.map((p,i)=>{
+    const ghost = { s:1+i*(span-1), e:Math.min(N, 1+i*(span-1)+span-1) };
+    const cls = p.state==='done'?'done':p.state==='mvp'?'mvp':'';
+    const label = p.state==='done' ? p.period : (p.period ?? '{{период}}');
+    const known = p.startQ!==null && p.endQ!==null;
+    const bs = known ? p.startQ : ghost.s, be = known ? p.endQ : ghost.e;
+    return `<div class="g-row phase">
+      <div class="g-label">${p.n}<span class="g-sub">${p.content}</span></div>
+      <div class="g-track" style="grid-template-columns:repeat(${N},1fr)">${cells()}
+        <div class="g-bar ${known||p.state==='done'?cls:'ghost'}"
+          style="grid-column:${bs} / ${be+1}">${label}</div>
+      </div></div>`;
+  }).join('');
+
+  const streamRows = d.streams.map((s,i)=>{
+    const known = s.startQ!==null && s.endQ!==null;
+    const bs = known ? s.startQ : 2, be = known ? s.endQ : N;
+    return `<div class="g-row"><div class="g-label" style="font-weight:var(--fw-reg);color:var(--c-ink-2)">${s.n}</div>
+      <div class="g-track" style="grid-template-columns:repeat(${N},1fr)">${cells()}
+        <div class="g-bar stream ${known?'':'ghost'}" style="grid-column:${bs} / ${be+1}">${known?'':'{{период}}'}</div>
+      </div></div>`;
+  }).join('');
+
+  const ms = d.milestones.map((m,i)=>{
+    const at = m.at ?? ((i+1)/(d.milestones.length+1));
+    return `<div class="g-diamond ${m.at===null?'ph':''}" style="left:${at*100}%"></div>`;
+  }).join('');
+  const msLabels = d.milestones.map((m,i)=>{
+    const at = m.at ?? ((i+1)/(d.milestones.length+1));
+    return `<div style="position:absolute;left:${at*100}%;transform:translateX(-50%);
+      font-size:var(--fs-caption);color:var(--c-ph-ink);white-space:nowrap">${m.label}</div>`;
+  }).join('');
+
+  document.getElementById('s14-gantt').innerHTML = `
+    ${head}
+    <div style="position:relative">
+      ${phaseRows}
+      <div class="g-row" style="margin-top:var(--sp-3)">
+        <div class="g-label" style="font-size:var(--fs-caption);color:var(--c-ink-3);
+          text-transform:uppercase;letter-spacing:.08em">Параллельные потоки</div>
+        <div></div></div>
+      ${streamRows}
+      <div style="position:absolute;left:360px;right:0;top:0;bottom:0;pointer-events:none;margin-left:var(--sp-4)">
+        <div class="g-today" style="left:${(d.todayAt??0)*100}%"><span>сегодня</span></div>
+        <div style="position:absolute;left:0;right:0;bottom:-8px;height:16px">${ms}</div>
+      </div>
+    </div>
+    <div style="position:relative;height:22px;margin-left:384px;margin-top:var(--sp-3)">${msLabels}</div>`;
+
+  // Gate-критерии — компактной строкой: содержание фаз уже подписано на ганте.
+  document.getElementById('s14-gates').innerHTML = `
+    <div class="t-cap" style="margin-bottom:var(--sp-3)">Gate-критерий перехода к следующей фазе</div>
+    <div class="row">${d.phases.map(p=>`
+      <div class="card plain stack-2" style="padding:var(--sp-3) var(--sp-4)">
+        <div class="t-cap">${p.n}</div>
+        <div class="t-small ink" style="font-weight:var(--fw-med)">${p.gate ?? ph('метрика')}</div>
+      </div>`).join('')}</div>`;
+})();
+
+/* --- слайд 16 ----------------------------------------------------------- */
+(function s16(){
+  const a = DECK_DATA.ask;
+  document.getElementById('s16-ask').innerHTML = `
+    <div class="row" style="gap:var(--sp-5)">
+      <div class="card accent stack-3"><div class="t-cap">1 · Бюджет</div>
+        <div class="num accent">${val(a.budget,'СУММА')}</div>
+        <div class="metric-label">Утвердить бюджет фазы MVP</div></div>
+      <div class="card stack-3"><div class="t-cap">2 · Команда</div>
+        <div class="num">${val(a.team,'FTE')}</div>
+        <div class="metric-label">Утвердить состав команды</div></div>
+    </div>
+    <div class="row" style="gap:var(--sp-5)">
+      <div class="card stack-3"><div class="t-cap">3 · Старт</div>
+        <div class="num">${val(a.start,'ДАТА')}</div>
+        <div class="metric-label">Дата старта разработки MVP</div></div>
+      <div class="card stack-3"><div class="t-cap">4 · Точка контроля</div>
+        <div class="num">${val(a.gate,'GATE')}</div>
+        <div class="metric-label">Следующий возврат на Комитет</div></div>
+    </div>
+    <div class="t-body ink" style="margin-top:var(--sp-3)">
+      Модель запуска — внутренний сервис в Альфа-Босс. Внешний контур рассматривается на фазе развития.</div>`;
+})();
+
+/* ============================================================================
+   ЗАМЕТКИ ДОКЛАДЧИКА
+   ========================================================================== */
+const NOTES = [
+ '1. Титул. Мы защищаем не идею, а следующий шаг по проверенной гипотезе. Просим одно решение — бюджет и старт MVP. На всё выступление 10 минут, вопросы в конце.',
+ '2. Executive summary. Проблема: поиск контрагента у среднего бизнеса — около месяца. Решение: рекомендация в Альфа-Босс на наших транзакционных данных. Спрос проверен на 40 руководителях. Просим бюджет и дату старта.',
+ '3. Проблема. Месяц складывается из четырёх этапов, и каждый из них — отдельная работа с отдельным риском. Мы схлопываем все четыре в один экран внутри приложения, где ЛПР уже сидит.',
+ '4. Почему только банк. Три актива вместе есть только у нас: база, полная транзакционная картина и построенный канал до ЛПР. Каталоги по открытым данным этого не воспроизводят.',
+ '5. Решение. Никакого нового приложения: функция внутри Альфа-Босс и интернет-банка. Контрагент уже прошёл KYC банка, риск-профиль известен. Отказ — в один тап.',
+ '6. Как работает. Пять шагов от транзакционных данных до чата. Ключевой узел — четвёртый: без подтверждения второй стороны ничего не открывается.',
+ '7. Три сценария. Разные входы под разные привычки: рекомендация сама пришла, ЛПР ищет сам, ищет сотрудник. Механика контакта во всех трёх одна — это упрощает и разработку, и юридический контур.',
+ '8. Обоюдное подтверждение. Это ответ на главный вопрос по таким сервисам — про спам и про навязывание. Односторонней рассылки в продукте нет технически.',
+ '9. Спрос. 18 интервью и тест прототипа на 22 участниках. Ключевые гипотезы подтвердились — формулировки на слайде из отчёта Discovery. Это и есть аргумент «почему сейчас».',
+ '10. Аудитория. Средний бизнес, выручка группы от 500 млн рублей. Решение о контрагенте ЛПР принимает лично — поэтому доставка именно в Альфа-Босс критична.',
+ '11. Развилка. Просим зафиксировать старт как внутренний сервис: лучшее соотношение качества, скорости и стоимости. Внешний контур не отменяется — на фазе развития инвайт не-клиентов превращает сервис в канал привлечения.',
+ '12. Эффекты. Структура эффектов финальная, цифры подставляются из финмодели. Обращаю внимание: эффект не только прямой — основная часть в оборотах, удержании и кредитном плече.',
+ '13. Бюджет. Основная статья — команда. Инфраструктуру и чат переиспользуем из Альфа-Босс, это прямая экономия, вынесена в сноску.',
+ '14. Дорожная карта. Discovery пройден. Каждый переход — только через gate-критерий, то есть Правление контролирует не даты, а метрики. Юридический контур идёт параллельно с первого дня.',
+ '15. Риски. Мы их не прячем. Два ключевых — регуляторный контур и качество рекомендаций на старте; оба закрываются ограниченным сегментом MVP и gate до пилота.',
+ '16. Запрос. Просим четыре решения: бюджет, команда, дата старта и следующая точка контроля. Всё остальное — наша зона ответственности.'
+];
+
+/* ============================================================================
+   НАВИГАЦИЯ И МАСШТАБИРОВАНИЕ
+   ========================================================================== */
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+const slides = [...document.querySelectorAll('.slide')];
+let cur = 0;
+function show(i){
+  cur = Math.max(0, Math.min(slides.length-1, i));
+  slides.forEach((s,k)=>s.classList.toggle('is-active', k===cur));
+  document.getElementById('hud-n').textContent = cur+1;
+  document.getElementById('notes-body').textContent = NOTES[cur] || '';
+  location.hash = '#'+(cur+1);
+}
+function fit(){
+  const k = Math.min(innerWidth/1920, innerHeight/1080);
+  document.getElementById('deck').style.transform = `translate(-50%,-50%) scale(${k})`;
+}
+addEventListener('resize', fit);
+addEventListener('keydown', e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){ e.preventDefault(); show(cur+1); }
+  else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); show(cur-1); }
+  else if(e.key==='Home') show(0);
+  else if(e.key==='End') show(slides.length-1);
+  else if(e.key.toLowerCase()==='n') document.getElementById('notes').classList.toggle('on');
+  else if(e.key.toLowerCase()==='f'){ document.fullscreenElement ? document.exitFullscreen()
+                                     : document.documentElement.requestFullscreen(); }
+  else if(e.key.toLowerCase()==='p') print();
+});
+addEventListener('click', e=>{ if(!e.target.closest('#notes')) show(cur + (e.clientX < innerWidth*0.25 ? -1 : 1)); });
+fit();
+show(parseInt(location.hash.slice(1)||'1',10)-1);
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Локальные настройки Claude Code — содержат машинозависимые пути
+.claude/settings.local.json
+
+# Python-окружение и артефакты сборки
+venv/
+__pycache__/
+*.pyc
+out/
+
+# Секреты — на случай, если появятся
+.env
+.env.local
+*.key
+*.pem
