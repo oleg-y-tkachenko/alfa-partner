@@ -17,3 +17,6 @@ out/
 .env.local
 *.key
 *.pem
+
+# Инструменты рендера PDF (локальные)
+*.pdf.png

@@ -459,7 +459,6 @@ html.print-mode,body.print-mode{ height:auto; overflow:visible; background:#1C1C
 body.print-mode{ padding:28px 0; }
 body.print-mode #deck{ position:static; display:block; height:auto; background:transparent; }
 body.print-mode #stage{ width:var(--slide-w); height:auto; transform:none !important; margin:0 auto; overflow:visible; }
-body.print-mode #bg{ height:var(--slide-h); }
 body.print-mode .slide{
   position:relative; inset:auto;
   width:var(--slide-w); height:var(--slide-h);
@@ -467,6 +466,21 @@ body.print-mode .slide{
   margin:0 0 28px;
 }
 body.print-mode .slide *{ animation:none !important; }
+/* Полупрозрачные градиенты в печать не идут: Chrome кодирует их альфу
+   как soft mask, а Quartz (Preview и QuickLook в macOS) рисует эту маску
+   как видимое содержимое — страница уходит в серые разводы. */
+body.print-mode .s-title::before,body.print-mode .plate::after{ display:none; }
+/* Холст в печать не идёт: Skia сериализует <canvas> с непрозрачной белой
+   подложкой, и она закрывает слайд. Граф остаётся экранным эффектом,
+   а страницы получают сплошную тёмную заливку. Побочный плюс — PDF
+   становится втрое легче, потому что растр графа в него не попадает. */
+/* Бегущий свет — конический градиент с альфой; в PDF он разворачивается
+   белой полосой поперёк карточки. В печати заменяем его статичным кантом. */
+body.print-mode .beam-ring,body.print-mode .beam-glow{ display:none; }
+body.print-mode .variant.v-one{ outline:2px solid #FFFFFF; outline-offset:2px; }
+
+body.print-mode #bg{ display:none; }
+body.print-mode .slide{ background:var(--ink); }
 body.print-mode .figure-bar{ width:100%; }
 body.print-mode .month i{ background:var(--red); }
 body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.print-mode #hint{ display:none; }
@@ -476,7 +490,6 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   html,body{ height:auto; overflow:visible; padding:0; background:var(--ink); }
   #deck{ position:static; display:block; height:auto; }
   #stage{ width:var(--slide-w); height:auto; transform:none !important; overflow:visible; }
-  #bg{ height:var(--slide-h); }
   .slide{
     position:relative; inset:auto;
     width:var(--slide-w); height:var(--slide-h);
@@ -484,6 +497,12 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
     margin:0; page-break-after:always; break-after:page;
   }
   .slide *{ animation:none !important; }
+  /* См. комментарий выше: альфа-градиенты ломают отрисовку в macOS Preview */
+  .s-title::before,.plate::after{ display:none; }
+  .beam-ring,.beam-glow{ display:none; }
+  .variant.v-one{ outline:2px solid #FFFFFF; outline-offset:2px; }
+  #bg{ display:none; }
+  .slide{ background:var(--ink); }
   .figure-bar{ width:100%; }
   .month i{ background:var(--red); }
   .slide:last-child{ page-break-after:auto; break-after:auto; }
@@ -711,7 +730,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
 
     <div class="anim grid" style="margin-top:24px;">
       <div class="col-4">
-        <div class="figure"><span data-count="130000" data-format="space">0</span></div>
+        <div class="figure"><span data-count="130000" data-format="space">130 000</span></div>
         <div class="figure-bar"></div>
         <div class="figure-label">клиентов в сегменте<br>среднего бизнеса</div>
       </div>
@@ -721,7 +740,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
         <div class="figure-label">ЛПР уже пользуется<br>Альфа-Боссом</div>
       </div>
       <div class="col-4">
-        <div class="figure"><span data-count="100" data-suffix="%">0</span></div>
+        <div class="figure"><span data-count="100" data-suffix="%">100%</span></div>
         <div class="figure-bar"></div>
         <div class="figure-label">транзакций клиентов<br>внутри банка</div>
       </div>
@@ -930,28 +949,41 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   });
 
   /* ---------- Счётчики чисел ------------------------------------------- */
+
+  /* Форматирование значения. Разделитель разрядов — неразрывный пробел,
+     чтобы группа не разорвалась переносом. */
+  function fmtCount(el, v){
+    var spaced = el.getAttribute('data-format') === 'space';
+    v = Math.round(v);
+    return (spaced ? String(v).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0') : String(v))
+           + (el.getAttribute('data-suffix') || '');
+  }
+
+  /* Проставить конечные значения сразу во всех слайдах.
+     Страховка для печати. Основная защита — в разметке: конечные значения
+     лежат там изначально, а нулём счётчик становится только в момент
+     запуска анимации. Поэтому в PDF попадут реальные числа даже если
+     beforeprint не сработает или JS вообще не выполнится. */
+  function settleCounters(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-count]'), function(el){
+      el.textContent = fmtCount(el, parseFloat(el.getAttribute('data-count')));
+    });
+  }
+
   function runCounters(slide){
     Array.prototype.forEach.call(slide.querySelectorAll('[data-count]'), function(el){
       var target = parseFloat(el.getAttribute('data-count'));
-      var suffix = el.getAttribute('data-suffix') || '';
-      var spaced = el.getAttribute('data-format') === 'space';
-
-      function fmt(v){
-        v = Math.round(v);
-        // Неразрывный пробел как разделитель разрядов — группа не разорвётся
-        return spaced ? String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : String(v);
-      }
-      if(reduced){ el.textContent = fmt(target) + suffix; return; }
+      if(reduced || printMode){ el.textContent = fmtCount(el, target); return; }
 
       var t0 = null, dur = 1150;
       function step(ts){
         if(t0 === null) t0 = ts;
         var p = Math.min((ts - t0) / dur, 1);
         var eased = 1 - Math.pow(1 - p, 4);          // easeOutQuart
-        el.textContent = fmt(target * eased) + suffix;
+        el.textContent = fmtCount(el, target * eased);
         if(p < 1) requestAnimationFrame(step);
       }
-      el.textContent = '0' + suffix;
+      el.textContent = fmtCount(el, 0);
       setTimeout(function(){ requestAnimationFrame(step); }, 380);
     });
   }
@@ -1103,6 +1135,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
     document.documentElement.classList.toggle('print-mode', printMode);
     if(printMode){
       graph.still();
+      settleCounters();
       slides.forEach(function(s){ s.classList.remove('leave-left', 'leave-right'); });
       stage.style.transform = 'none';
       window.scrollTo(0, 0);
@@ -1146,8 +1179,12 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
 
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', fit);
-  window.addEventListener('beforeprint', function(){ graph.still(); stage.style.transform = 'none'; });
-  window.addEventListener('afterprint', function(){ if(!printMode){ fit(); graph.start(); } });
+  window.addEventListener('beforeprint', function(){
+    graph.still(); settleCounters(); stage.style.transform = 'none';
+  });
+  window.addEventListener('afterprint', function(){
+    if(!printMode){ fit(); graph.start(); }
+  });
 
   fit();
   show(0);
