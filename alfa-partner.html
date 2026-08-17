@@ -238,7 +238,46 @@ th,td{ text-align:left; vertical-align:middle; }
 @keyframes maskUp{ from{ transform:translateY(105%); } }
 
 /* ==========================================================================
-   7. СЛАЙД 2 — ПРОБЛЕМА
+   7. СЛАЙД 2 — ПРЕДЫСТОРИЯ
+   Лента лет. Смысл слайда не в хронологии, а в том, что одна и та же
+   потребность всплывала в каждом исследовании начиная с 2022 года.
+   Колонка 2022 шире остальных — в ней два фокуса JTBD.
+   ========================================================================== */
+.tl{ display:grid; grid-template-columns:1.7fr 1fr 1fr 1fr 1fr; gap:20px; align-items:start; }
+.tl-col{ position:relative; padding-top:26px; border-top:1px solid var(--line); }
+.tl-col::before{ content:''; position:absolute; top:-5px; left:0; width:9px; height:9px; background:var(--tx-3); }
+.tl-col .yr{ font-size:34px; font-weight:700; letter-spacing:-.035em; line-height:1; }
+.tl-col .src{
+  margin-top:8px; font-size:var(--fs-micro); font-weight:600;
+  letter-spacing:.12em; text-transform:uppercase; color:var(--tx-3);
+}
+.tl-col h3{ margin-top:16px; font-size:18px; font-weight:600; letter-spacing:-.012em; line-height:1.24; }
+/* Составные названия не должны рваться по дефису */
+.nb{ white-space:nowrap; }
+.tl-col p{ margin-top:9px; font-size:14px; line-height:1.45; color:var(--tx-2); }
+
+/* 2026 — точка, в которой мы находимся сейчас */
+.tl-col.now{ border-top-color:var(--red); }
+.tl-col.now::before{ background:var(--red); width:11px; height:11px; top:-6px; }
+.tl-col.now .yr{ color:var(--red-lite); }
+
+/* Два фокуса из JTBD 2022. Красный маркер у второго: именно в него
+   попадает Альфа-Партнёр, и именно он до сих пор не реализован. */
+.focus{ margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+.focus div{ font-size:14px; line-height:1.4; padding:9px 12px; background:var(--surf); color:var(--tx-2); }
+.focus b{ font-weight:700; color:var(--tx-1); }
+.focus .f2{ box-shadow:inset 3px 0 0 var(--red); }
+
+/* Лента проявляется слева направо — читается как ход времени */
+.slide.is-active .tl-col{ animation:rise .55s var(--ease-out) both; }
+.slide.is-active .tl-col:nth-child(1){ animation-delay:.20s; }
+.slide.is-active .tl-col:nth-child(2){ animation-delay:.32s; }
+.slide.is-active .tl-col:nth-child(3){ animation-delay:.44s; }
+.slide.is-active .tl-col:nth-child(4){ animation-delay:.56s; }
+.slide.is-active .tl-col:nth-child(5){ animation-delay:.68s; }
+
+/* ==========================================================================
+   8. СЛАЙД 3 — ПРОБЛЕМА
    ========================================================================== */
 /* Лента из 30 делений: «месяц» заполняется красным по дню */
 .month{ display:flex; gap:4px; height:32px; }
@@ -252,7 +291,7 @@ th,td{ text-align:left; vertical-align:middle; }
 .proof{ border-left:4px solid var(--red); padding:4px 0 4px 22px; }
 
 /* ==========================================================================
-   8. СЛАЙД 3 — СУТЬ ВАРИАНТОВ
+   9. СЛАЙД 4 — СУТЬ ВАРИАНТОВ
    ========================================================================== */
 .variant{ padding:26px 28px; height:100%; display:flex; flex-direction:column; }
 .variant .tag{ font-size:var(--fs-micro); font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
@@ -325,7 +364,7 @@ th,td{ text-align:left; vertical-align:middle; }
 .variant.v-two .foot{ border-top:1px solid var(--line); color:var(--tx-3); }
 
 /* ==========================================================================
-   9. СЛАЙД 6 — КАК ЭТО РАБОТАЕТ
+  10. СЛАЙД 7 — КАК ЭТО РАБОТАЕТ
    ========================================================================== */
 .flow{ position:relative; height:250px; }
 .flow-in{ position:absolute; left:0; width:330px; border-left:2px solid var(--line-hard); padding:2px 0 2px 16px; }
@@ -351,7 +390,7 @@ th,td{ text-align:left; vertical-align:middle; }
 .consent div{ border-top:1px solid var(--line); padding-top:12px; }
 
 /* ==========================================================================
-   10. СЛАЙДЫ 7 / 8 — АРГУМЕНТЫ
+  11. СЛАЙДЫ 8 / 9 — АРГУМЕНТЫ
    ========================================================================== */
 .block3{ border-top:3px solid var(--line-hard); padding-top:20px; }
 .block3 h3{ font-size:27px; font-weight:600; letter-spacing:-.022em; margin:10px 0 12px; }
@@ -361,7 +400,7 @@ th,td{ text-align:left; vertical-align:middle; }
 .arg h3{ font-size:21px; font-weight:600; letter-spacing:-.018em; margin-bottom:5px; }
 
 /* ==========================================================================
-   11. СЛУЖЕБНЫЙ СЛОЙ
+  12. СЛУЖЕБНЫЙ СЛОЙ
    ========================================================================== */
 #chrome{ position:fixed; inset:auto 0 0 0; z-index:40; pointer-events:none; }
 #bar-track{ height:3px; background:rgba(255,255,255,.14); }
@@ -385,7 +424,7 @@ th,td{ text-align:left; vertical-align:middle; }
 #notes .eyebrow{ color:rgba(255,255,255,.6); margin-bottom:8px; }
 
 /* ==========================================================================
-   12. АНИМАЦИИ ПОЯВЛЕНИЯ ЭЛЕМЕНТОВ
+  13. АНИМАЦИИ ПОЯВЛЕНИЯ ЭЛЕМЕНТОВ
    ========================================================================== */
 @keyframes rise{ from{ opacity:0; transform:translateY(20px); } to{ opacity:1; transform:translateY(0); } }
 .slide.is-active .anim{ animation:rise .6s var(--ease-out) both; }
@@ -411,7 +450,7 @@ th,td{ text-align:left; vertical-align:middle; }
 }
 
 /* ==========================================================================
-   13. РЕЖИМ ПЕЧАТИ (клавиша P) И @media print
+  14. РЕЖИМ ПЕЧАТИ (клавиша P) И @media print
    В печати фоновый граф ограничен первой страницей: растягивать один канвас
    на 8 полос нельзя — картинка исказится. Остальные страницы идут по чистому
    тёмному фону сцены.
@@ -484,7 +523,64 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   </section>
 
   <!-- ====================================================================
-       СЛАЙД 2 — ПРОБЛЕМА
+       СЛАЙД 2 — ПРЕДЫСТОРИЯ
+       ==================================================================== -->
+  <section class="slide"
+    data-notes="Слайд снимает вопрос «откуда это взялось»: потребность не гипотеза команды, она всплывала в каждом исследовании с 2022 года. Годы проговорить бегло, задержаться на 2026-м и на последней строке.">
+    <div class="anim">
+      <div class="eyebrow">Предыстория</div>
+      <h1 class="h1" style="margin-top:16px;">Потребность подтверждается с 2022 года</h1>
+    </div>
+
+    <div class="tl" style="margin-top:48px;">
+      <div class="tl-col">
+        <div class="yr">2022</div>
+        <div class="src">JTBD</div>
+        <h3>Исследование на старте <span class="nb">Альфа-Босса</span></h3>
+        <div class="focus">
+          <div><b>Фокус 1</b> · Инструменты контроля и акцепта решений — с него начали реализацию</div>
+          <div class="f2"><b>Фокус 2</b> · Аналитика и помощь в принятии решений, трансляция задач банку, формирование стратегии</div>
+        </div>
+      </div>
+
+      <div class="tl-col">
+        <div class="yr">2023</div>
+        <div class="src">Markswebb</div>
+        <h3>Исследование потребностей ЛПР</h3>
+        <p>Выделен отдельный блок «Развитие бизнеса»: поиск партнёров, проверка контрагентов, отраслевая аналитика</p>
+      </div>
+
+      <div class="tl-col">
+        <div class="yr">2024</div>
+        <div class="src">Markswebb</div>
+        <h3>Конкурентный анализ сервисов для ЛПР</h3>
+        <p>Блок «Развитие бизнеса» выделен повторно</p>
+      </div>
+
+      <div class="tl-col">
+        <div class="yr">2025</div>
+        <div class="src">Цифровой офис</div>
+        <h3>Поиск контрагентов рассматривали</h3>
+        <p>При дефиците ресурсов силы направили на базовый функционал для ЛПР</p>
+      </div>
+
+      <div class="tl-col now">
+        <div class="yr">2026</div>
+        <div class="src">ALFA NOVA</div>
+        <h3>Проект выбран</h3>
+        <p>Совпал со стратегией развития Альфа-Босса и потребностями ЛПР, подтверждёнными исследованиями</p>
+      </div>
+    </div>
+
+    <div class="anim proof" style="margin-top:auto; animation-delay:.88s;">
+      <p class="lead" style="color:var(--tx-1);">
+        По итогам ALFA NOVA мы вышли на развилку в стратегии реализации
+      </p>
+    </div>
+  </section>
+
+  <!-- ====================================================================
+       СЛАЙД 3 — ПРОБЛЕМА
        ==================================================================== -->
   <section class="slide"
     data-notes="Проблема известна каждому в зале: контрагента ищут месяц и всё равно вслепую. Три барьера назвать быстро, задержаться на нижнем блоке — это доказательная база.">
@@ -526,7 +622,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   </section>
 
   <!-- ====================================================================
-       СЛАЙД 3 — РАЗВИЛКА: СУТЬ ВАРИАНТОВ
+       СЛАЙД 4 — РАЗВИЛКА: СУТЬ ВАРИАНТОВ
        ==================================================================== -->
   <section class="slide"
     data-notes="Сначала объяснить, чем варианты различаются по существу, и только потом идти в таблицу. Ключевая разница — где заканчивается продукт: в чате внутри банка или на выдаче контакта.">
@@ -570,7 +666,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   </section>
 
   <!-- ====================================================================
-       СЛАЙД 4 — РАЗВИЛКА: СРАВНЕНИЕ ПАРАМЕТРОВ
+       СЛАЙД 5 — РАЗВИЛКА: СРАВНЕНИЕ ПАРАМЕТРОВ
        ==================================================================== -->
   <section class="slide"
     data-notes="Сравнение вести построчно и без нажима: правление само увидит расхождение между воронкой на бумаге и воронкой в реальности. Последняя строка — вывод слайда.">
@@ -604,7 +700,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   </section>
 
   <!-- ====================================================================
-       СЛАЙД 5 — АКТИВ
+       СЛАЙД 6 — АКТИВ
        ==================================================================== -->
   <section class="slide"
     data-notes="Держать паузу на трёх числах — это фактура доклада. Главное: защищён только третий слой, первые два есть у конкурентов.">
@@ -647,7 +743,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   </section>
 
   <!-- ====================================================================
-       СЛАЙД 6 — КАК ЭТО РАБОТАЕТ
+       СЛАЙД 7 — КАК ЭТО РАБОТАЕТ
        ==================================================================== -->
   <section class="slide"
     data-notes="Три входа — одна точка выхода: чат первых лиц внутри банка. На блоке про согласие не задерживаться, он снимает вопрос комплаенса заранее.">
@@ -706,7 +802,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   </section>
 
   <!-- ====================================================================
-       СЛАЙД 7 — ПОЧЕМУ ВАРИАНТ 2 НЕ РАБОТАЕТ
+       СЛАЙД 8 — ПОЧЕМУ ВАРИАНТ 2 НЕ РАБОТАЕТ
        ==================================================================== -->
   <section class="slide"
     data-notes="Три причины, по одному предложению каждая — не расширять. Тон ровный: мы разбираем вариант, а не спорим с его автором.">
@@ -735,7 +831,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   </section>
 
   <!-- ====================================================================
-       СЛАЙД 8 — ПОЧЕМУ АЛЬФА-БОСС
+       СЛАЙД 9 — ПОЧЕМУ АЛЬФА-БОСС
        ==================================================================== -->
   <section class="slide"
     data-notes="Пять аргументов проговорить плотно, по одной фразе на пункт. Финальная плашка — формулировка, ради которой собран весь доклад.">
@@ -793,7 +889,7 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
 
 <!-- Служебный слой -->
 <div id="chrome"><div id="bar-track"><div id="bar"></div></div></div>
-<div id="counter"><b id="cur">1</b> / 8</div>
+<div id="counter"><b id="cur">1</b> / <span id="total">8</span></div>
 <div id="hint">← → навигация · N заметки · P печать</div>
 <div id="notes"><div class="eyebrow">Заметки докладчика</div><div id="notes-text"></div></div>
 
@@ -812,6 +908,8 @@ body.print-mode #chrome,body.print-mode #counter,body.print-mode #notes,body.pri
   var cur      = document.getElementById('cur');
   var notes    = document.getElementById('notes');
   var notesTxt = document.getElementById('notes-text');
+
+  document.getElementById('total').textContent = slides.length;
 
   var index = 0, notesOpen = false, printMode = false;
   var BASE_W = 1280, BASE_H = 720;
